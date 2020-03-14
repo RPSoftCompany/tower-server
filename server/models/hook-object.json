@@ -1,0 +1,24 @@
+{
+  "name": "hookObject",
+  "base": "PersistedModel",
+  "idInjection": false,
+  "options": {
+    "validateUpsert": true
+  },
+  "excludeBaseProperties": [
+    "id"
+  ],
+  "properties": {
+    "url": {
+      "type": "string",
+      "required": true
+    },
+    "description": {
+      "type": "string"
+    }
+  },
+  "validations": [],
+  "relations": {},
+  "acls": [],
+  "methods": {}
+}

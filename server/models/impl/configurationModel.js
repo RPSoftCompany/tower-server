@@ -1,0 +1,868 @@
+//    Copyright RPSoft 2019,2020. All Rights Reserved.
+//    This file is part of RPSoft Tower.
+//
+//    Tower is free software: you can redistribute it and/or modify
+//    it under the terms of the GNU General Public License as published by
+//    the Free Software Foundation; either version 3 of the License, or
+//    (at your option) any later version.
+//
+//    Tower is distributed in the hope that it will be useful,
+//    but WITHOUT ANY WARRANTY; without even the implied warranty of
+//    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+//    GNU General Public License for more details.
+//
+//    You should have received a copy of the GNU General Public License
+//    along with Tower.  If not, see <http://www.gnu.org/licenses/>.
+
+const HttpErrors = require('http-errors');
+const MemberClass = require('./member.js');
+
+module.exports = class ConfigurationModel {
+    /**
+     * Constructor
+     *
+     * @param {object} app APP
+     */
+    constructor(app) {
+        this.configurationName = 'configurationModel';
+        this.logger = null;
+
+        this.app = app;
+    }
+
+    /**
+     * logger
+     *
+     * @param {string} severity Severity
+     * @param {string} method current method
+     * @param {string} message Message to log
+     * @param {string} obj object to log
+     *
+     */
+    log(severity, method, message, obj) {
+        if (this.logger === null) {
+            this.logger = this.app.get('winston');
+        }
+
+        if (obj !== undefined) {
+            this.logger.log(severity, `${this.configurationName}.${method} ${message}`, obj);
+        } else {
+            this.logger.log(severity, `${this.configurationName}.${method} ${message}`);
+        }
+    }
+
+    /**
+     * Works exectly the same as find, but filters data depanding on user
+     *
+     * @param {object} filter regular filter
+     * @param {object} options options from request
+     * @param {boolean} showDeleted shows deleted models
+     *
+     * @return {object} configuration object
+     */
+    async findWithPermissions(filter, options, showDeleted) {
+        this.log('debug', 'findWithPermissions', 'STARTED');
+
+        const Role = this.app.models.Role;
+        const Member = this.app.models.member;
+        const ConfigModel = this.app.models.configurationModel;
+
+        if (showDeleted === undefined || !showDeleted) {
+            if (filter !== undefined) {
+                if (filter.where !== undefined) {
+                    if (filter.where.deleted === undefined) {
+                        filter.where.deleted = false;
+                    }
+                } else {
+                    filter.where = {
+                        deleted: false,
+                    };
+                }
+            } else {
+                filter = {
+                    where: {
+                        deleted: false,
+                    },
+                };
+            }
+        }
+
+        const userId = options.accessToken.userId;
+
+        let ret = await ConfigModel.find(filter);
+
+        const allRoles = await Role.find();
+
+        const roleSet = new Set();
+        allRoles.forEach((role) => {
+            roleSet.add(role.name);
+        });
+
+        const user = await Member.findOne({
+            where: {
+                id: userId,
+            },
+        });
+
+        if (user.username === 'admin') {
+            this.log('debug', 'findWithPermissions', 'FINISHED');
+            return ret;
+        }
+
+        const member = new MemberClass(this.app);
+
+        const userRoles = await member.getUserRoles(userId);
+
+        ret = ret.filter((model) => {
+            const modelPermName = `configurationModel.${model.base}.${model.name}.view`;
+            if (roleSet.has(modelPermName)) {
+                if (userRoles.includes(modelPermName) || userRoles.includes('admin')) {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+            return true;
+        });
+
+        this.log('debug', 'findWithPermissions', 'FINISHED');
+        return ret;
+    };
+
+    /**
+     * Works exectly the same as findOne, but filters data depanding on user
+     *
+     * @param {object} filter regular filter
+     * @param {object} options options from request
+     *
+     * @return {object} configuration object
+     */
+    async findOneWithPermissions(filter, options) {
+        this.log('debug', 'findOneWithPermissions', 'STARTED');
+
+        let ret = await this.findWithPermissions(filter, options);
+
+        if (ret === undefined || ret === null || ret.length === 0) {
+            ret = null;
+        } else {
+            ret = ret[0];
+        }
+
+        this.log('debug', 'findOneWithPermissions', 'FINISHED');
+        return ret;
+    };
+
+    /**
+     * Creates configuration model
+     *
+     * @param {configurationModel} model Model to add
+     * @param {object} options options from request
+     *
+     * @return {configurationModel} created model
+     */
+    async createConfigurationModel(model) {
+        this.log('debug', 'createConfigurationModel', 'STARTED');
+
+        this.app.hookSingleton.executeHook('beforeCreate', 'ConfigurationModel', model);
+
+        model.deleted = false;
+
+        let wasDeleted = false;
+
+        const baseConfiguration = this.app.models.baseConfiguration;
+        const ConfigModel = this.app.models.configurationModel;
+
+        const exists = await ConfigModel.findOne({
+            where: {
+                name: model.name,
+            },
+        });
+
+        if (model.id !== undefined) {
+            this.log('debug', 'createConfigurationModel', 'FINISHED');
+            throw new HttpErrors.BadRequest(`New model shouldn't contain id`);
+        }
+
+        if (exists !== null) {
+            if (exists.deleted !== true) {
+                this.log('debug', 'createConfigurationModel', 'FINISHED');
+                throw new HttpErrors.BadRequest('Model with this name already exists');
+            } else {
+                wasDeleted = true;
+            }
+        }
+
+        if (model.rules !== undefined) {
+            model.rules.map((rule) => {
+                if (rule.name === undefined || rule.name === null || rule.name === '') {
+                    this.log('debug', 'createConfigurationModel', 'FINISHED');
+                    throw new HttpErrors.BadRequest('Invalid rule: name not valid');
+                }
+                if (rule.value === undefined || rule.value === null || rule.value === '') {
+                    this.log('debug', 'createConfigurationModel', 'FINISHED');
+                    throw new HttpErrors.BadRequest('Invalid rule: value not valid');
+                }
+                if (rule.error === undefined || rule.error === null || rule.error === '') {
+                    this.log('debug', 'createConfigurationModel', 'FINISHED');
+                    throw new HttpErrors.BadRequest('Invalid rule: error not valid');
+                }
+
+                const random = Math.random().toString(36).substr(2, 15);
+                rule._id = random;
+            });
+        }
+
+        if (model.defaultValues !== undefined) {
+            model.defaultValues.map((value) => {
+                if (value.name === undefined || value.name === null || value.name === '') {
+                    this.log('debug', 'createConfigurationModel', 'FINISHED');
+                    throw new HttpErrors.BadRequest('Invalid defaultVariable: name not valid');
+                }
+                if (value.variable === undefined || value.variable === null) {
+                    this.log('debug', 'createConfigurationModel', 'FINISHED');
+                    throw new HttpErrors.BadRequest('Invalid defaultVariable: value not valid');
+                }
+
+                const random = Math.random().toString(36).substr(2, 15);
+                value._id = random;
+            });
+        }
+
+        const baseExists = await baseConfiguration.findOne({
+            where: {
+                name: model.base,
+            },
+        });
+
+        if (baseExists === null) {
+            this.log('debug', 'createConfigurationModel', 'FINISHED');
+            throw new HttpErrors.BadRequest('Base configuration does not exist');
+        }
+
+        if (wasDeleted) {
+            await exists.updateAttributes(model);
+            this.app.hookSingleton.executeHook('afterCreate', 'ConfigurationModel', exists);
+            this.log('debug', 'createConfigurationModel', 'FINISHED');
+
+            return exists;
+        } else {
+            await model.save();
+            this.app.hookSingleton.executeHook('afterCreate', 'ConfigurationModel', model);
+            this.log('debug', 'createConfigurationModel', 'FINISHED');
+
+            return model;
+        }
+    }
+
+    /**
+     * Updates or creates configuration model
+     *
+     * @param {configurationModel} model Model to add
+     * @param {object} options options from request
+     * @param {boolean} replace true if you want to replace whole instance or false when only part of it
+     *
+     * @return {configurationModel} created model
+     */
+    async upsertConfigurationModel(model, options, replace) {
+        this.log('debug', 'upsertConfigurationModel', 'STARTED');
+
+        this.app.hookSingleton.executeHook('beforeUpsert', 'ConfigurationModel', model);
+
+        model.deleted = false;
+
+        const Role = this.app.models.Role;
+        const userId = options.accessToken.userId;
+
+        const exists = await this.findWithPermissions({
+            where: {
+                name: model.name,
+            },
+        }, options, true);
+
+        if (exists.length > 0) {
+            const roleName = `configurationModel.${model.name}.modify`;
+            const oldModel = exists[0];
+
+            const role = await Role.findOne({
+                where: {
+                    name: roleName,
+                },
+            });
+
+            if (model.rules !== undefined) {
+                oldModel.rules = model.rules;
+            }
+            if (model.defaultValues !== undefined) {
+                oldModel.defaultValues = model.defaultValues;
+            }
+            if (model.options !== undefined) {
+                oldModel.options = model.options;
+            }
+            if (model.options !== undefined) {
+                oldModel.options = model.options;
+            }
+
+            if (role === null) {
+                this.app.hookSingleton.executeHook('afterUpsert', 'ConfigurationModel', model);
+                this.log('debug', 'upsertConfigurationModel', 'FINISHED');
+                if (replace) {
+                    return await oldModel.replaceAttributes(model, {
+                        validate: false,
+                    });
+                } else {
+                    return await oldModel.replaceAttributes(oldModel, {
+                        validate: false,
+                    });
+                }
+            } else {
+                const member = new MemberClass(this.app);
+                const userRoles = await member.getUserRoles(userId);
+
+                if (userRoles.includes(roleName)) {
+                    this.app.hookSingleton.executeHook('afterUpsert', 'ConfigurationModel', model);
+                    this.log('debug', 'upsertConfigurationModel', 'FINISHED');
+                    if (replace) {
+                        return await oldModel.replaceAttributes(model, {
+                            validate: false,
+                        });
+                    } else {
+                        return await oldModel.replaceAttributes(oldModel, {
+                            validate: false,
+                        });
+                    }
+                } else {
+                    this.app.hookSingleton.executeHook('afterUpsert', 'ConfigurationModel', model);
+                    this.log('debug', 'upsertConfigurationModel', 'FINISHED');
+                    throw new HttpErrors.Unauthorized();
+                }
+            }
+        } else {
+            this.app.hookSingleton.executeHook('afterUpsert', 'ConfigurationModel', model);
+            this.log('debug', 'upsertConfigurationModel', 'FINISHED');
+            return await model.save();
+        }
+    };
+
+    /**
+     * Deletes configuration model
+     *
+     * @param {string} modelId Model id to delete
+     * @param {object} options options from request
+     *
+     * @return {configurationModel} created model
+     */
+    async deleteModel(modelId, options) {
+        this.log('debug', 'deleteModel', 'STARTED');
+
+        this.app.hookSingleton.executeHook('beforeDelete', 'ConfigurationModel', modelId);
+
+        const model = await this.findOneWithPermissions({
+            where: {
+                id: modelId,
+            },
+        }, options);
+
+        if (model !== null && model !== undefined) {
+            model.deleted = true;
+            await model.replaceAttributes(model, {
+                validate: false,
+            });
+        }
+
+        this.app.hookSingleton.executeHook('afterDelete', 'ConfigurationModel', modelId);
+
+        this.log('debug', 'deleteModel', 'FINISHED');
+    }
+
+    /**
+     * Adds new rule to model
+     *
+     * @param {string} modelId Model id
+     * @param {Rule} rule Rule to add
+     * @param {object} options options from request
+     *
+     * @return {Rule} returns created rule
+     */
+    async addRule(modelId, rule, options) {
+        this.log('debug', 'addRule', 'STARTED');
+
+        this.app.hookSingleton.executeHook('beforeAddRule', 'ConfigurationModel', {
+            modelId: modelId,
+            rule: rule,
+        });
+
+        const model = await this.findOneWithPermissions({
+            where: {
+                id: modelId,
+            },
+        }, options);
+
+        if (model === null) {
+            this.log('debug', 'addRule', 'FINISHED');
+            throw new HttpErrors.BadRequest('Invalid model id');
+        }
+
+        rule._id = '_' + Math.random().toString(36).substr(2, 15);
+
+        model.rules.push(rule);
+
+        await model.save();
+
+        this.app.hookSingleton.executeHook('afterAddRule', 'ConfigurationModel', {
+            modelId: modelId,
+            rule: rule,
+        });
+
+        this.log('debug', 'addRule', 'FINISHED');
+
+        return rule;
+    }
+
+    /**
+     * Removes rule from model
+     *
+     * @param {string} modelId Model id
+     * @param {string} ruleId Rule id
+     * @param {object} options options from request
+     */
+    async removeRule(modelId, ruleId, options) {
+        this.log('debug', 'removeRule', 'STARTED');
+
+        this.app.hookSingleton.executeHook('beforeRemoveRule', 'ConfigurationModel', {
+            modelId: modelId,
+            ruleId: ruleId,
+        });
+
+        const model = await this.findOneWithPermissions({
+            where: {
+                id: modelId,
+            },
+        }, options);
+
+        if (model === null) {
+            this.log('debug', 'removeRule', 'FINISHED');
+            throw new HttpErrors.BadRequest('Invalid model id');
+        }
+
+        model.rules = model.rules.filter((rule) => {
+            return rule._id.toString().trim() !== ruleId.toString().trim();
+        });
+
+        await model.save();
+
+        this.app.hookSingleton.executeHook('afterRemoveRule', 'ConfigurationModel', {
+            modelId: modelId,
+            ruleId: ruleId,
+        });
+
+        this.log('debug', 'removeRule', 'FINISHED');
+    }
+
+    /**
+     * Updates rule from model
+     *
+     * @param {string} modelId Model id
+     * @param {Rule} rule Rule to update (with id)
+     * @param {object} options options from request
+     *
+     * @return {Rule} returns updated rule
+     */
+    async modifyRule(modelId, rule, options) {
+        this.log('debug', 'modifyRule', 'STARTED');
+
+        this.app.hookSingleton.executeHook('beforeModifyRule', 'ConfigurationModel', {
+            modelId: modelId,
+            rule: rule,
+        });
+
+        const model = await this.findOneWithPermissions({
+            where: {
+                id: modelId,
+            },
+        }, options);
+
+        if (model === null) {
+            this.log('debug', 'modifyRule', 'FINISHED');
+            throw new HttpErrors.BadRequest('Invalid model id');
+        }
+
+        let changedRule = null;
+
+        model.rules = model.rules.map((el) => {
+            if (el._id.toString().trim() === rule._id.toString().trim()) {
+                el = rule;
+                changedRule = el;
+            }
+
+            return el;
+        });
+
+        await model.save();
+
+        this.app.hookSingleton.executeHook('afterModifyRule', 'ConfigurationModel', {
+            modelId: modelId,
+            rule: rule,
+        });
+
+        this.log('debug', 'modifyRule', 'FINISHED');
+
+        return changedRule;
+    }
+
+    /**
+     * Adds new default variable to model
+     *
+     * @param {string} modelId Model id
+     * @param {defaultVariable} variable variable to add
+     * @param {object} options options from request
+     *
+     * @return {defaultVariable} returns created variable
+     */
+    async addDefaultVariable(modelId, variable, options) {
+        this.log('debug', 'addDefaultVariable', 'STARTED');
+
+        this.app.hookSingleton.executeHook('beforeAddVariable', 'ConfigurationModel', {
+            modelId: modelId,
+            variable: variable,
+        });
+
+        const model = await this.findOneWithPermissions({
+            where: {
+                id: modelId,
+            },
+        }, options);
+
+        if (model === null) {
+            this.log('debug', 'addDefaultVariable', 'FINISHED');
+            throw new HttpErrors.BadRequest('Invalid model id');
+        }
+
+        const isIn = model.defaultValues.find((el) => {
+            return el.name === variable.name;
+        });
+
+        if (isIn !== undefined) {
+            this.log('debug', 'addDefaultVariable', 'FINISHED');
+            throw new HttpErrors.BadRequest('Variable with this name already exists');
+        }
+
+        variable._id = '_' + Math.random().toString(36).substr(2, 15);
+
+        model.defaultValues.push(variable);
+
+        await model.save();
+
+        this.app.hookSingleton.executeHook('afterAddVariable', 'ConfigurationModel', {
+            modelId: modelId,
+            variable: variable,
+        });
+
+        // HOOK START
+        const where = {};
+        where[model.base] = model.name;
+        where.variables = {elemMatch: {name: variable.name}};
+
+        const baseModels = await this.app.models.baseConfiguration.find({});
+        const _id = {};
+        baseModels.forEach( (el) => {
+            _id[el.name] = `$${el.name}`;
+        });
+
+        const agg = await this.app.models.configuration.aggregate({
+            where: where,
+            aggregate: [{
+                $group: {
+                    _id: _id,
+                    version: {$max: '$version'},
+                },
+            }],
+        });
+
+        agg.forEach( async (el) => {
+            el.id.version = el.version;
+            const conf = await this.app.models.configuration.find({
+                where: el.id,
+            });
+
+            this.app.hookSingleton.executeHook('afterUpdate', 'Configuration', conf);
+        });
+        // HOOK END
+
+        this.log('debug', 'addDefaultVariable', 'FINISHED');
+
+        return variable;
+    }
+
+    /**
+     * Remove default variable to model
+     *
+     * @param {string} modelId Model id
+     * @param {string} variableId variable id to remove
+     * @param {object} options options from request
+     */
+    async removeVariable(modelId, variableId, options) {
+        this.log('debug', 'removeVariable', 'STARTED');
+
+        this.app.hookSingleton.executeHook('beforeRemoveVariable', 'ConfigurationModel', {
+            modelId: modelId,
+            variableId: variableId,
+        });
+
+        const model = await this.findOneWithPermissions({
+            where: {
+                id: modelId,
+            },
+        }, options);
+
+        if (model === null) {
+            this.log('debug', 'removeVariable', 'FINISHED');
+            throw new HttpErrors.BadRequest('Invalid model id');
+        }
+
+        let variableName = '';
+
+        model.defaultValues = model.defaultValues.filter((variable) => {
+            if (variable._id.toString().trim() !== variableId.toString().trim()) {
+                return true;
+            } else {
+                variableName = variable.name;
+                return false;
+            }
+        });
+
+        await model.save();
+
+        this.app.hookSingleton.executeHook('afterRemoveVariable', 'ConfigurationModel', {
+            modelId: modelId,
+            variableId: variableId,
+        });
+
+        // HOOK START
+        const where = {};
+        where[model.base] = model.name;
+        where.variables = {elemMatch: {name: variableName}};
+
+        const baseModels = await this.app.models.baseConfiguration.find({});
+        const _id = {};
+        baseModels.forEach( (el) => {
+            _id[el.name] = `$${el.name}`;
+        });
+
+        const agg = await this.app.models.configuration.aggregate({
+            where: where,
+            aggregate: [{
+                $group: {
+                    _id: _id,
+                    version: {$max: '$version'},
+                },
+            }],
+        });
+
+        agg.forEach( async (el) => {
+            el.id.version = el.version;
+            const conf = await this.app.models.configuration.find({
+                where: el.id,
+            });
+
+            this.app.hookSingleton.executeHook('afterUpdate', 'Configuration', conf);
+        });
+        // HOOK END
+
+        this.log('debug', 'removeVariable', 'FINISHED');
+    }
+
+    /**
+     * Updates default variable from model
+     *
+     * @param {string} modelId Model id
+     * @param {defaultVariable} variable Rule to update (with id)
+     * @param {object} options options from request
+     *
+     * @return {defaultVariable} returns updated rule
+     */
+    async modifyVariable(modelId, variable, options) {
+        this.log('debug', 'modifyVariable', 'STARTED');
+
+        this.app.hookSingleton.executeHook('beforeModifyVariable', 'ConfigurationModel', {
+            modelId: modelId,
+            variable: variable,
+        });
+
+        const model = await this.findOneWithPermissions({
+            where: {
+                id: modelId,
+            },
+        }, options);
+
+        if (model === null) {
+            this.log('debug', 'modifyVariable', 'FINISHED');
+            throw new HttpErrors.BadRequest('Invalid model id');
+        }
+
+        if (variable._id === undefined || variable._id === null) {
+            this.log('debug', 'modifyVariable', 'FINISHED');
+            throw new HttpErrors.BadRequest('Invalid variable id');
+        }
+
+        let changedVariable = null;
+
+        model.defaultValues = model.defaultValues.map((el) => {
+            if (el._id.toString().trim() === variable._id.toString().trim()) {
+                el = variable;
+                changedVariable = el;
+            }
+
+            return el;
+        });
+
+        await model.save();
+
+        this.app.hookSingleton.executeHook('afterModifyVariable', 'ConfigurationModel', {
+            modelId: modelId,
+            variable: variable,
+        });
+
+        // HOOK START
+        const where = {};
+        where[model.base] = model.name;
+        where.variables = {elemMatch: {name: variable.name}};
+
+        const baseModels = await this.app.models.baseConfiguration.find({});
+        const _id = {};
+        baseModels.forEach( (el) => {
+            _id[el.name] = `$${el.name}`;
+        });
+
+        const agg = await this.app.models.configuration.aggregate({
+            where: where,
+            aggregate: [{
+                $group: {
+                    _id: _id,
+                    version: {$max: '$version'},
+                },
+            }],
+        });
+
+        agg.forEach( async (el) => {
+            el.id.version = el.version;
+            const conf = await this.app.models.configuration.find({
+                where: el.id,
+            });
+
+            this.app.hookSingleton.executeHook('afterUpdate', 'Configuration', conf);
+        });
+        // HOOK END
+
+        this.log('debug', 'modifyVariable', 'FINISHED');
+
+        return changedVariable;
+    }
+
+    /**
+     * Updates model options
+     *
+     * @param {string} modelId Model id
+     * @param {modelOptions} modelOptions model options
+     * @param {object} options options from request
+     *
+     * @return {modelOptions} returns updated rule
+     */
+    async modifyModelOptions(modelId, modelOptions, options) {
+        this.log('debug', 'modifyModelOptions', 'STARTED');
+
+        const model = await this.findOneWithPermissions({
+            where: {
+                id: modelId,
+            },
+        }, options);
+
+        if (model === null) {
+            this.log('debug', 'modifyModelOptions', 'FINISHED');
+            throw new HttpErrors.BadRequest('Invalid model id');
+        }
+
+        model.options = modelOptions;
+
+        await model.save();
+
+        this.log('debug', 'modifyModelOptions', 'FINISHED');
+
+        return model.options;
+    }
+
+    /**
+     * Adds new restriction to model
+     *
+     * @param {string} modelId Model id
+     * @param {string} restriction variable to add
+     * @param {object} options options from request
+     */
+    async addRestriction(modelId, restriction, options) {
+        this.log('debug', 'addRestriction', 'STARTED');
+
+        const model = await this.findOneWithPermissions({
+            where: {
+                id: modelId,
+            },
+        }, options);
+
+        if (model === null) {
+            this.log('debug', 'addRestriction', 'FINISHED');
+            throw new HttpErrors.BadRequest('Invalid model id');
+        }
+
+        if (model.restrictions === undefined) {
+            model.restrictions = [];
+        }
+
+        const isIn = model.restrictions.find((el) => {
+            return el.name === restriction;
+        });
+
+        if (isIn === undefined) {
+            model.restrictions.push(restriction);
+            await model.save();
+        }
+
+        this.log('debug', 'addRestriction', 'FINISHED');
+
+        return;
+    }
+
+    /**
+     * Remove restriction from model
+     *
+     * @param {string} modelId Model id
+     * @param {string} restriction variable to remove
+     * @param {object} options options from request
+     */
+    async removeRestriction(modelId, restriction, options) {
+        this.log('debug', 'removeRestriction', 'STARTED');
+
+        const model = await this.findOneWithPermissions({
+            where: {
+                id: modelId,
+            },
+        }, options);
+
+        if (model === null) {
+            this.log('debug', 'removeRestriction', 'FINISHED');
+            throw new HttpErrors.BadRequest('Invalid model id');
+        }
+
+        if (model.restrictions === undefined) {
+            model.restrictions = [];
+        }
+
+        model.restrictions = model.restrictions.filter((el) => {
+            return el !== restriction;
+        });
+
+        await model.save();
+
+        this.log('debug', 'removeRestriction', 'FINISHED');
+
+        return;
+    }
+};

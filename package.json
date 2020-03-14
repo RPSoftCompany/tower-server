@@ -1,0 +1,92 @@
+{
+  "name": "tower",
+  "version": "1.4.0",
+  "bin": "server/server.js",
+  "main": "server/server.js",
+  "engines": {
+    "node": ">=10"
+  },
+  "pkg": {
+    "scripts": [
+      "server/boot/**/*.js",
+      "node_modules/loopback/server/middleware/*.js",
+      "node_modules/loopback/lib/connectors/*.js",
+      "node_modules/loopback-component-explorer/*.js",
+      "node_modules/loopback-component-explorer/lib/*.js",
+      "node_modules/loopback/common/**/*.js",
+      "node_modules/moment/locale/*.js",
+      "node_modules/loopback-boot/lib/*.js",
+      "node_modules/loopback-boot/*.js",
+      "node_modules/express/lib/*.js",
+      "common/**/*.js"
+    ],
+    "assets": [
+      "node_modules/**",
+      "node_modules/*/node_modules/loopback-phase/intl/**/*.json",
+      "node_modules/*/intl/**/*.json",
+      "node_modules/loopback-component-explorer/public/**/*",
+      "node_modules/loopback-component-explorer/public/*",
+      "node_modules/swagger-ui/dist/*",
+      "node_modules/swagger-ui/dist/**/*",
+      "node_modules/*/node_modules/strong-globalize/cldr/*.json",
+      "node_modules/loopback/common/**/*.json",
+      "node_modules/strong-globalize/cldr/*.json",
+      "node_modules/loopback-component-explorer/intl/**/*.json",
+      "node_modules/strong-remoting/node_modules/strong-error-handler/intl/**/*.json",
+      "node_modules/strong-remoting/node_modules/strong-error-handler/views/*",
+      "node_modules/strong-error-handler/intl/**/*.json",
+      "node_modules/strong-error-handler/views/*",
+      "node_modules/loopback-component-passport/lib/models/*",
+      "node_modules/passport/**/*",
+      "node_modules/passport-ldapauth/**/*",
+      "client/**",
+      "server/**/*.json",
+      "server/**/*.html",
+      "server/**/*.css",
+      "server/**/*.js"
+    ]
+  },
+  "scripts": {
+    "lint": "eslint .",
+    "start": "NODE_ENV=development nodemon --ignore 'test/*.js' .",
+    "test": "mocha --growl",
+    "package": "pkg --out-path ../tower-dist ."
+  },
+  "dependencies": {
+    "@aliatech/loopback-mongo-aggregate-mixin": "^1.1.1",
+    "axios": "^0.19.0",
+    "compression": "^1.0.3",
+    "confert": "^1.0.0",
+    "cors": "^2.5.2",
+    "crypto-random-string": "^3.0.1",
+    "express-flash": "0.0.2",
+    "express-session": "^1.16.2",
+    "file-system": "^2.2.2",
+    "helmet": "^3.21.1",
+    "ldapauth-fork": "^4.2.0",
+    "ldapjs": "^1.0.2",
+    "loopback": "^3.26.0",
+    "loopback-boot": "^3.3.1",
+    "loopback-component-explorer": "^6.5.0",
+    "loopback-component-passport": "^3.11.0",
+    "loopback-connector-mongodb": "^3.9.2",
+    "serve-favicon": "^2.0.1",
+    "shelljs": "^0.8.3",
+    "strong-error-handler": "^3.0.0",
+    "winston": "^3.2.1"
+  },
+  "devDependencies": {
+    "eslint": "^6.0.0",
+    "eslint-config-google": "^0.13.0",
+    "eslint-config-loopback": "^8.0.0",
+    "mocha": "^6.2.0",
+    "nyc": "^15.0.0",
+    "should": "^13.2.3"
+  },
+  "repository": {
+    "type": "",
+    "url": ""
+  },
+  "license": "UNLICENSED",
+  "description": "tower"
+}
