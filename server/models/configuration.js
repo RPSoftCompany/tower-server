@@ -25,6 +25,7 @@ let configModel = null;
 const initiate = (main) => {
     if (main.app !== undefined) {
         configModel = new ConfigModel(main.app);
+        configModel.autoInitialize();
         hook(main);
     } else {
         setTimeout( () => {

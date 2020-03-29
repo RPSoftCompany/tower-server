@@ -42,6 +42,7 @@ if (process.env.NODE_ENV === 'production') {
     mainConfig.config.certificate = userMainConfig.certificate
     || mainConfig.config.certificate;
     mainConfig.config.logLevel = userMainConfig.logLevel;
+    mainConfig.config.nonSafe = userMainConfig.nonSafe;
 
     mainConfig.components = null;
 
@@ -76,6 +77,8 @@ let logLevel = mainConfig.env === 'production' ? 'error' : 'debug';
 if (mainConfig.config.logLevel) {
     logLevel = mainConfig.config.logLevel;
 }
+
+const nonSafe = mainConfig.config.nonSafe === undefined ? false : mainConfig.config.nonSafe;
 
 // Winston instance
 const logger = (module.exports = winston.createLogger({
@@ -120,11 +123,24 @@ app.start = () => {
             console.log('Browse Tower REST API at %s%s', baseUrl, explorerPath);
         }
 
+        app.nonSafe = nonSafe;
+
         console.log();
         console.log('============================================================');
         console.log(`Tower Configuration Server, version ${packageFile.version} started`);
         console.log('============================================================');
         console.log();
+
+        if (app.nonSafe) {
+            console.log('<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>');
+            console.log('<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>');
+            console.log();
+            console.log(`<!> WARNING!!! Non-Safe mode is on, don't use in on production environment <!>`);
+            console.log();
+            console.log('<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>');
+            console.log('<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>');
+            console.log();
+        }
     });
 };
 

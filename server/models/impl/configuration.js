@@ -18,6 +18,9 @@ const HttpErrors = require('http-errors');
 const ConfigurationModelClass = require('./configurationModel.js');
 const crypto = require('crypto');
 
+const fs = require('file-system');
+const path = require('path');
+
 module.exports = class Configuration {
     /**
      * Constructor
@@ -60,25 +63,31 @@ module.exports = class Configuration {
      */
     async createCrypt() {
         if (this.cryptr === null) {
-            // const v1 = this.app.models.v1;
-            // const boot = await v1.findOne({
-            //     where: {
-            //         booted: true,
-            //     },
-            // });
-
-            // // this.cryptr = new SimpleCrypto(boot.salt);
-            // let salt = boot.salt;
-            // salt = salt.match(/.{1,20}/g).reverse().join('');
-            // salt = salt.match(/.{1,20}/g).reverse().join('');
-            // this.cryptr = salt;
-
             if (this.app.secret === undefined) {
                 throw new HttpErrors.BadRequest(`Secret not initialized`);
             }
 
             this.cryptr = this.app.secret;
         };
+    }
+
+    /**
+     * Auto initialize (While using nonSafe option, secret is stored in file in Tower directory)
+     *
+     */
+    autoInitialize() {
+        this.log('debug', 'autoInitialize', 'STARTED');
+        if (this.app.nonSafe) {
+            let secretPath = './secret';
+            if (process.env.NODE_ENV === 'production') {
+                secretPath = path.join(path.dirname(process.execPath), 'secret');
+            }
+            if (fs.existsSync(secretPath)) {
+                const secret = fs.readFileSync(secretPath, 'utf8');
+                this.initializeSecret(secret);
+            }
+        }
+        this.log('debug', 'autoInitialize', 'FINISHED');
     }
 
     /**
@@ -109,7 +118,6 @@ module.exports = class Configuration {
             const pass = this.encryptPassword('encryptionCheck');
             boot.encryptionCheck = pass;
             await boot.save();
-            this.log('debug', 'initializeSecret', 'FINISHED');
         } else {
             try {
                 this.decryptPassword(boot.encryptionCheck);
@@ -121,8 +129,19 @@ module.exports = class Configuration {
                 this.log('debug', 'initializeSecret', 'FINISHED');
                 throw new HttpErrors.BadRequest(`Invalid secret`);
             }
-            this.log('debug', 'initializeSecret', 'FINISHED');
         }
+
+        if (this.app.nonSafe) {
+            let secretPath = './secret';
+            if (process.env.NODE_ENV === 'production') {
+                secretPath = path.join(path.dirname(process.execPath), 'secret');
+            }
+            if (!fs.existsSync(secretPath)) {
+                fs.writeFile(secretPath, secret);
+            }
+        }
+
+        this.log('debug', 'initializeSecret', 'FINISHED');
     }
 
     /**
