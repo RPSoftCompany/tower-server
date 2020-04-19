@@ -1,26 +1,21 @@
 {
-  "name": "defaultVariable",
-  "base": "Model",
-  "idInjection": false,
+  "name": "defaultVariableHistory",
+  "base": "PersistedModel",
+  "idInjection": true,
   "options": {
     "validateUpsert": true
   },
-  "excludeBaseProperties": [
-    "id"
-  ],
   "properties": {
-    "_id": {
-      "type": "string"
-    },
-    "name": {
+    "model_id": {
       "type": "string",
       "required": true
     },
-    "variable": {
-      "type": "string",
-      "required": true
+    "variables": {
+      "type": [
+        "variable"
+      ]
     },
-    "creationDate": {
+    "effectiveDate": {
       "type": "date",
       "required": true,
       "default": "$now"

@@ -158,6 +158,10 @@ module.exports = function(Configuration) {
         return await configModel.initializeSecret(secret);
     };
 
+    Configuration.findConfigurationForGivenDate = async (filter, date, options) => {
+        return await configModel.findConfigurationForGivenDate(filter, date, options);
+    };
+
     // ====================================================
     // ================ Remote methods ====================
     // ====================================================
@@ -249,6 +253,17 @@ module.exports = function(Configuration) {
         ],
         description: 'Find all promotion candidates for given configuration',
         returns: {arg: 'configuration', type: '[configuration]', root: true},
+    });
+
+    Configuration.remoteMethod('findConfigurationForGivenDate', {
+        http: {verb: 'GET', status: 200, path: '/findByDate'},
+        accepts: [
+            {arg: 'filter', type: 'any', http: {source: 'query'}},
+            {arg: 'date', type: 'string', http: {source: 'query'}},
+            {arg: 'options', type: 'object', http: 'optionsFromRequest'},
+        ],
+        description: 'Find all promotion candidates for given configuration',
+        returns: {arg: 'configuration', type: 'configuration', root: true},
     });
 
     Configuration.remoteMethod('initialized', {

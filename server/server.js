@@ -78,7 +78,10 @@ if (mainConfig.config.logLevel) {
     logLevel = mainConfig.config.logLevel;
 }
 
-const nonSafe = mainConfig.config.nonSafe === undefined ? false : mainConfig.config.nonSafe;
+let nonSafe = mainConfig.config.nonSafe === undefined ? false : mainConfig.config.nonSafe;
+if (process.env.NODE_ENV === 'development') {
+    nonSafe = true;
+}
 
 // Winston instance
 const logger = (module.exports = winston.createLogger({
@@ -135,7 +138,7 @@ app.start = () => {
             console.log('<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>');
             console.log('<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>');
             console.log();
-            console.log(`<!> WARNING!!! Non-Safe mode is on, don't use in on production environment <!>`);
+            console.log(`<!> WARNING!!! Non-Safe mode is on, don't use it on production environment <!>`);
             console.log();
             console.log('<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>');
             console.log('<!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!>');

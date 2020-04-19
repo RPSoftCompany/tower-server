@@ -196,7 +196,8 @@ module.exports = class V1 {
                         } catch (e) {
                             if (e.response !== undefined) {
                                 if (e.response.status !== 403) {
-                                    throw new HttpErrors.InternalServerError(`Variable '${path}' does not exist in Vault or invalid token`);
+                                    throw new HttpErrors.InternalServerError(
+                                        `Variable '${path}' does not exist in Vault or invalid token`);
                                 }
                             } else {
                                 e.message = 'Vault connection error';
@@ -332,6 +333,8 @@ module.exports = class V1 {
                 }
             });
         });
+
+        values.draft = false;
 
         const Config = new ConfigurationClass(this.app);
         const BaseConfiguration = this.app.models.baseConfiguration;

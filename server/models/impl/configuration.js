@@ -346,10 +346,10 @@ module.exports = class Configuration {
 
         newObject.createdBy = userId;
         newObject.version = ++version;
+        newObject.draft = config.draft === undefined ? false : config.draft;
         newObject.promoted = false;
         newObject.effectiveDate = undefined;
         newObject.deleted = false;
-
 
         const configObject = await Configuration.create(newObject);
 
@@ -373,6 +373,7 @@ module.exports = class Configuration {
         const toPromote = await this.findWithPermissions({
             where: {
                 id: id,
+                draft: false,
             },
         }, options);
 
@@ -392,7 +393,7 @@ module.exports = class Configuration {
     /**
      * Find all promotion candidates for given model
      *
-     * @param {configuration} configuration configuration id
+     * @param {configuration} configuration configuration
      * @param {object} options request options
      *
      */
@@ -454,6 +455,94 @@ module.exports = class Configuration {
         const candConfig = await this.findWithPermissions({where: whereFilter, order: 'effectiveDate DESC'}, options);
 
         this.log('debug', 'findPromotionCandidates', 'FINISHED');
+
+        return candConfig;
+    }
+
+    /**
+     * Find configuration for given time (version + default variables)
+     *
+     * @param {any} filter query filter
+     * @param {string} date date string
+     * @param {object} options request options
+     *
+     */
+    async findConfigurationForGivenDate(filter, date, options) {
+        this.log('debug', 'findConfigurationForGivenDate', 'STARTED');
+
+        const givenDate = new Date(date);
+        if (givenDate == 'Invalid Date') {
+            this.log('debug', 'findConfigurationForGivenDate', 'FINISHED');
+            throw new HttpErrors.BadRequest('Invalid date');
+        }
+
+        const BaseConfiguration = this.app.models.baseConfiguration;
+        const ConfigurationModel = this.app.models.configurationModel;
+        const DefaultVariableHistory = this.app.models.defaultVariableHistory;
+
+        filter.effectiveDate = {lt: givenDate};
+
+        let candConfig = await this.findWithPermissions({
+            where: filter,
+            order: 'effectiveDate ASC',
+            limit: 1,
+            draft: false,
+            deleted: false,
+        }, options);
+
+        candConfig = candConfig.length > 0 ? candConfig[0] : undefined;
+
+        if (candConfig === undefined) {
+            this.log('debug', 'findConfigurationForGivenDate', 'FINISHED');
+            return {};
+        }
+
+        const allBases = await BaseConfiguration.find({
+            order: 'sequenceNumber ASC',
+            fields: {name: true},
+        });
+
+        const defaultMap = new Map();
+
+        for (const base of allBases) {
+            const model = await ConfigurationModel.findOne({
+                where: {
+                    name: candConfig[base.name],
+                },
+            });
+
+            const history = await DefaultVariableHistory.findOne({
+                where: {
+                    model_id: {regexp: new RegExp(model.id)},
+                    effectiveDate: {lt: givenDate},
+                },
+                order: 'effectiveDate DESC',
+            });
+
+            if (history !== null) {
+                history.variables.forEach((variable) => {
+                    defaultMap.set(variable.name, variable.value);
+                });
+            }
+
+            model.defaultValues.forEach((variable) => {
+                const tempDate = new Date(variable.creationDate);
+                if (tempDate < givenDate) {
+                    console.log(variable);
+                    defaultMap.set(variable.name, variable.value);
+                }
+            });
+        }
+
+        candConfig.variables.map((variable) => {
+            if (defaultMap.has(variable.name)) {
+                variable.value = defaultMap.get(variable.name);
+            }
+        });
+
+        this.log('debug', 'findConfigurationForGivenDate', 'FINISHED');
+
+        console.log(candConfig);
 
         return candConfig;
     }

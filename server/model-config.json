@@ -139,5 +139,9 @@
   "connection": {
     "dataSource": "mongoDB",
     "public": true
+  },
+  "defaultVariableHistory": {
+    "dataSource": "mongoDB",
+    "public": false
   }
 }

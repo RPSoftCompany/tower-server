@@ -547,6 +547,12 @@ module.exports = class ConfigurationModel {
             throw new HttpErrors.BadRequest('Variable with this name already exists');
         }
 
+        const variableHistory = this.app.models.defaultVariableHistory;
+        await variableHistory.create({
+            model_id: `${model.id}`,
+            variables: [...model.defaultValues],
+        });
+
         variable._id = '_' + Math.random().toString(36).substr(2, 15);
 
         model.defaultValues.push(variable);
@@ -622,6 +628,12 @@ module.exports = class ConfigurationModel {
 
         let variableName = '';
 
+        const variableHistory = this.app.models.defaultVariableHistory;
+        await variableHistory.create({
+            model_id: `${model.id}`,
+            variables: [...model.defaultValues],
+        });
+
         model.defaultValues = model.defaultValues.filter((variable) => {
             if (variable._id.toString().trim() !== variableId.toString().trim()) {
                 return true;
@@ -689,6 +701,8 @@ module.exports = class ConfigurationModel {
             variable: variable,
         });
 
+        const variableHistory = this.app.models.defaultVariableHistory;
+
         const model = await this.findOneWithPermissions({
             where: {
                 id: modelId,
@@ -706,6 +720,11 @@ module.exports = class ConfigurationModel {
         }
 
         let changedVariable = null;
+
+        await variableHistory.create({
+            model_id: `${model.id}`,
+            variables: [...model.defaultValues],
+        });
 
         model.defaultValues = model.defaultValues.map((el) => {
             if (el._id.toString().trim() === variable._id.toString().trim()) {
