@@ -52,13 +52,18 @@ module.exports = function(app) {
             return true;
         }
 
-        const model = context.modelName;
+        let model = context.modelName;
         let access = context.accessType;
 
         if (access === 'READ') {
             access = 'view';
         } else {
             access = 'modify';
+        }
+
+        if (model === 'v1') {
+            model = 'configuration';
+            access = 'view';
         }
 
         let hasPermissions = false;

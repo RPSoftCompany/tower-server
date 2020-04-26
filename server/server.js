@@ -43,6 +43,7 @@ if (process.env.NODE_ENV === 'production') {
     || mainConfig.config.certificate;
     mainConfig.config.logLevel = userMainConfig.logLevel;
     mainConfig.config.nonSafe = userMainConfig.nonSafe;
+    mainConfig.config.tokenHeaders = userMainConfig.tokenHeaders;
 
     mainConfig.components = null;
 
@@ -82,6 +83,8 @@ let nonSafe = mainConfig.config.nonSafe === undefined ? false : mainConfig.confi
 if (process.env.NODE_ENV === 'development') {
     nonSafe = true;
 }
+
+const tokenHeaders = mainConfig.config.tokenHeaders === undefined ? [] : mainConfig.config.tokenHeaders;
 
 // Winston instance
 const logger = (module.exports = winston.createLogger({
@@ -125,6 +128,11 @@ app.start = () => {
             const explorerPath = app.get('loopback-component-explorer').mountPath;
             console.log('Browse Tower REST API at %s%s', baseUrl, explorerPath);
         }
+
+        app.use(loopback.token({
+            headers: ['Authorization', ...tokenHeaders],
+            params: ['access_token'],
+        }));
 
         app.nonSafe = nonSafe;
 
