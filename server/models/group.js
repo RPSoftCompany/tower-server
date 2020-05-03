@@ -34,6 +34,23 @@ module.exports = function(Group) {
     initiate(Group);
 
     Group.disableRemoteMethodByName('createChangeStream');
+    Group.disableRemoteMethodByName('exists');
+    Group.disableRemoteMethodByName('update');
+    Group.disableRemoteMethodByName('upsertWithWhere');
+    Group.disableRemoteMethodByName('deleteById');
+
+    Group.disableRemoteMethodByName('upsert');
+    Group.disableRemoteMethodByName('replaceOrCreate');
+    Group.disableRemoteMethodByName('replaceById');
+    Group.disableRemoteMethodByName('prototype.updateAttributes');
+
+    Group.validatesUniquenessOf('name', {
+        message: 'Group name must be unique',
+    });
+
+    Group.deleteGroup = async (id) => {
+        return await group.removeGroup(id);
+    };
 
     Group.addGroupRole = async (id, role) => {
         return await group.addGroupRole(id, role);
@@ -46,6 +63,14 @@ module.exports = function(Group) {
     // ====================================================
     // ================ Remote methods ====================
     // ====================================================
+
+    Group.remoteMethod('deleteGroup', {
+        http: {verb: 'DELETE', status: 204, path: '/:id'},
+        accepts: [
+            {arg: 'id', type: 'string', http: {source: 'path'}},
+        ],
+        description: 'Delete a model instance by {{id}} from the data source',
+    });
 
     Group.remoteMethod('addGroupRole', {
         http: {verb: 'POST', status: 204, path: '/:id/role'},

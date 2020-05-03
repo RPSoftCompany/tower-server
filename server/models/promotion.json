@@ -17,13 +17,13 @@
     "toModels": {
       "type": [
         "string"
-      ]
+      ],
+      "default": []
     }
   },
   "validations": [],
   "relations": {},
-  "acls": [
-    {
+  "acls": [{
       "accessType": "*",
       "principalType": "ROLE",
       "principalId": "groupSolver",

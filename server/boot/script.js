@@ -70,13 +70,31 @@ module.exports = async (app) => {
         }
     }
 
-    await connection.findOrCreate({
-        system: 'LDAP',
+    const ldap = await connection.findOne({
+        where: {
+            system: 'LDAP',
+        },
     });
 
-    await connection.findOrCreate({
-        system: 'Vault',
+    if (ldap === null) {
+        await connection.create({
+            system: 'LDAP',
+            enabled: false,
+        });
+    }
+
+    const vault = await connection.findOne({
+        where: {
+            system: 'Vault',
+        },
     });
+
+    if (vault === null) {
+        await connection.create({
+            system: 'Vault',
+            enabled: false,
+        });
+    }
 
     const wasBooted = await v1.findOne({
         where: {

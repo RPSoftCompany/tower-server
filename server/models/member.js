@@ -39,6 +39,9 @@ module.exports = (Member) => {
     Member.disableRemoteMethodByName('upsertWithWhere');
     Member.disableRemoteMethodByName('confirm');
     Member.disableRemoteMethodByName('prototype.verify');
+    Member.disableRemoteMethodByName('createChangeStream');
+    Member.disableRemoteMethodByName('changePassword');
+    Member.disableRemoteMethodByName('count');
 
     Member.disableRemoteMethodByName('login');
 
@@ -89,10 +92,6 @@ module.exports = (Member) => {
         }
 
         return await member.removeUserGroup(userId, group);
-    };
-
-    Member.authenticationType = async () => {
-        return Member.app.get('ldap');
     };
 
     Member.setAsTechnicalUser = async (isTechUser, userId) => {
@@ -255,15 +254,6 @@ module.exports = (Member) => {
         description: 'Sets user technical user value',
         returns: {
             arg: 'accessToken',
-            type: 'string',
-            root: true,
-        },
-    });
-
-    Member.remoteMethod('authenticationType', {
-        description: 'Returns current authenticationType',
-        returns: {
-            arg: 'type',
             type: 'string',
             root: true,
         },

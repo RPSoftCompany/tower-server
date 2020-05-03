@@ -85,5 +85,38 @@ describe('Connection', () => {
                 should(configuration.status).equal(200);
             });
         });
+
+        describe('PATCH LDAP', () => {
+            it(`should return 200`, async () => {
+                const configuration = await axios.patch(`${url}/connections`, {
+                    'system': 'LDAP',
+                    'url': 'string',
+                    'bindCredentials': '',
+                    'enabled': false,
+                    'id': ldapId,
+                }, {
+                    headers: {Authorization: token},
+                });
+
+                should(configuration.status).equal(200);
+            });
+        });
+
+        describe('PATCH Vault', () => {
+            it(`should return 200`, async () => {
+                const configuration = await axios.patch(`${url}/connections`, {
+                    'system': 'Vault',
+                    'url': 'string',
+                    'enabled': false,
+                    'useGlobalToken': true,
+                    'globalToken': 'test',
+                    'tokens': [],
+                }, {
+                    headers: {Authorization: token},
+                });
+
+                should(configuration.status).equal(200);
+            });
+        });
     });
 });

@@ -51,6 +51,48 @@ module.exports = class Group {
     }
 
     /**
+     * Remove group
+     *
+     * @param {string} groupId id of group where to add the role
+     *
+     */
+    async removeGroup(groupId) {
+        this.log('debug', 'removeGroup', 'STARTED');
+
+        const Group = this.app.models.group;
+        const Member = this.app.models.member;
+
+        const group = await Group.findOne({
+            where: {
+                id: groupId,
+            },
+        });
+
+        if (group === null) {
+            this.log('debug', 'removeGroup', 'FINISHED');
+            throw new HttpErrors.BadRequest('Invalid group id');
+        }
+
+        const groupMembers = await Member.find({
+            where: {
+                groups: group.name,
+            },
+        });
+
+        groupMembers.forEach(async (member) => {
+            member.groups = member.groups.filter((gr) => {
+                return gr !== group.name;
+            });
+
+            await member.save();
+        });
+
+        await group.destroy();
+
+        this.log('debug', 'removeGroup', 'FINISHED');
+    }
+
+    /**
      * Adds role to group
      *
      * @param {string} groupId id of group where to add the role

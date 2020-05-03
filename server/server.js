@@ -80,21 +80,31 @@ if (mainConfig.config.logLevel) {
 }
 
 let nonSafe = mainConfig.config.nonSafe === undefined ? false : mainConfig.config.nonSafe;
-if (process.env.NODE_ENV === 'development') {
+if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
     nonSafe = true;
 }
 
 const tokenHeaders = mainConfig.config.tokenHeaders === undefined ? [] : mainConfig.config.tokenHeaders;
+
+const winstonFormat = winston.format.printf(({level, message, _label, timestamp}) => {
+    const date = new Date(timestamp);
+    let mili = `${date.getMilliseconds()}`;
+    while (mili.length < 3) {
+        mili = `0${mili}`;
+    }
+    return `${date.toLocaleString()}.${mili} ${level}: ${message}`;
+});
 
 // Winston instance
 const logger = (module.exports = winston.createLogger({
     level: logLevel,
     transports: [new winston.transports.Console()],
     format: winston.format.combine(
+        winston.format.timestamp(),
         winston.format.colorize({
             all: true,
         }),
-        winston.format.simple()
+        winstonFormat
     ),
 }));
 
@@ -120,6 +130,8 @@ app.start = () => {
 
     // start the web server
     return server.listen(app.get('port'), function() {
+        app.set('winston', logger);
+
         const baseUrl = (httpOnly ? 'http://' : 'https://') + app.get('host') + ':' + app.get('port');
         app.emit('started');
         // const baseUrl = app.get('url').replace(/\/$/, '');
@@ -159,8 +171,6 @@ app.start = () => {
 // Sub-apps like REST API are mounted via boot scripts.
 boot(app, mainConfig, (err) => {
     if (err) throw err;
-
-    app.set('winston', logger);
 
     // start the server if `$ node server.js`
     if (require.main === module) {

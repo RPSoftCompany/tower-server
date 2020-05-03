@@ -54,7 +54,9 @@ module.exports = class Configuration {
         if (obj !== undefined) {
             this.logger.log(severity, `${this.configurationName}.${method} ${message}`, obj);
         } else {
-            this.logger.log(severity, `${this.configurationName}.${method} ${message}`);
+            if (this.logger !== undefined) {
+                this.logger.log(severity, `${this.configurationName}.${method} ${message}`);
+            }
         }
     }
 
@@ -305,10 +307,12 @@ module.exports = class Configuration {
                 },
             }, options);
 
-            if (model.options.hasRestrictions) {
-                if (!model.restrictions.includes(config[base.name])) {
-                    this.log('debug', 'createConfiguration', 'FINISHED');
-                    throw new HttpErrors.BadRequest(`Model restrictions forbids this configuration`);
+            if (model.options !== null) {
+                if (model.options.hasRestrictions) {
+                    if (!model.restrictions.includes(config[base.name])) {
+                        this.log('debug', 'createConfiguration', 'FINISHED');
+                        throw new HttpErrors.BadRequest(`Model restrictions forbids this configuration`);
+                    }
                 }
             }
         }
@@ -481,13 +485,13 @@ module.exports = class Configuration {
         const DefaultVariableHistory = this.app.models.defaultVariableHistory;
 
         filter.effectiveDate = {lt: givenDate};
+        filter.deleted = false;
+        filter.draft = false;
 
         let candConfig = await this.findWithPermissions({
             where: filter,
-            order: 'effectiveDate ASC',
+            order: 'effectiveDate DESC',
             limit: 1,
-            draft: false,
-            deleted: false,
         }, options);
 
         candConfig = candConfig.length > 0 ? candConfig[0] : undefined;
@@ -528,7 +532,6 @@ module.exports = class Configuration {
             model.defaultValues.forEach((variable) => {
                 const tempDate = new Date(variable.creationDate);
                 if (tempDate < givenDate) {
-                    console.log(variable);
                     defaultMap.set(variable.name, variable.value);
                 }
             });
@@ -541,8 +544,6 @@ module.exports = class Configuration {
         });
 
         this.log('debug', 'findConfigurationForGivenDate', 'FINISHED');
-
-        console.log(candConfig);
 
         return candConfig;
     }

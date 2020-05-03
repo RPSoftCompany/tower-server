@@ -211,6 +211,8 @@ module.exports = class ConfigurationModel {
                 const random = Math.random().toString(36).substr(2, 15);
                 rule._id = random;
             });
+        } else {
+            model.rules = [];
         }
 
         if (model.defaultValues !== undefined) {
@@ -227,6 +229,8 @@ module.exports = class ConfigurationModel {
                 const random = Math.random().toString(36).substr(2, 15);
                 value._id = random;
             });
+        } else {
+            model.defaultValues = [];
         }
 
         const baseExists = await baseConfiguration.findOne({
@@ -247,6 +251,9 @@ module.exports = class ConfigurationModel {
 
             return exists;
         } else {
+            model.options = {
+                hasRestrictions: false,
+            };
             await model.save();
             this.app.hookSingleton.executeHook('afterCreate', 'ConfigurationModel', model);
             this.log('debug', 'createConfigurationModel', 'FINISHED');

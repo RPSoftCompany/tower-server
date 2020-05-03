@@ -15,7 +15,8 @@
     "groups": {
       "type": [
         "string"
-      ]
+      ],
+      "default": []
     },
     "newUser": {
       "type": "boolean"
@@ -54,15 +55,13 @@
       "foreignKey": "userId"
     }
   },
-  "acls": [
-    {
+  "acls": [{
       "accessType": "*",
       "principalType": "ROLE",
       "principalId": "admin",
       "permission": "ALLOW"
     },
     {
-      "accessType": "EXECUTE",
       "principalType": "ROLE",
       "principalId": "$authenticated",
       "permission": "ALLOW",
@@ -97,12 +96,6 @@
       "principalId": "$everyone",
       "permission": "ALLOW",
       "property": "getUserDetails"
-    },
-    {
-      "principalType": "ROLE",
-      "principalId": "$everyone",
-      "permission": "ALLOW",
-      "property": "authenticationType"
     },
     {
       "accessType": "*",

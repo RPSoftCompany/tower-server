@@ -15,6 +15,17 @@ describe('Configuration', () => {
         token = temp.data.id;
     });
     describe('Authorized (token)', () => {
+        describe('initialize', () => {
+            it(`should return 200`, async () => {
+                const configuration = await axios.post(`${url}/configurations/initialize`, {
+                    secret: '12345678901234567890123456789012',
+                }, {
+                    headers: {Authorization: token},
+                });
+
+                should(configuration.status).equal(204);
+            });
+        });
         describe('POST', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.post(`${url}/configurations`, {

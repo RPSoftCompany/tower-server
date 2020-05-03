@@ -18,8 +18,7 @@
   },
   "validations": [],
   "relations": {},
-  "acls": [
-    {
+  "acls": [{
       "accessType": "*",
       "principalType": "ROLE",
       "principalId": "groupSolver",

@@ -422,17 +422,21 @@ module.exports = class Member {
             },
         });
 
+        if (user === undefined) {
+            throw new HttpErrors.BadRequest('Invalid user');
+        }
+
         if (user.groups.includes(groupName)) {
             return user.groups;
         }
 
-        const group = Group.findOne({
+        const group = await Group.findOne({
             where: {
                 name: groupName,
             },
         });
 
-        if (group === undefined || group === null) {
+        if (group === null) {
             throw new HttpErrors.BadRequest('Invalid group');
         }
 

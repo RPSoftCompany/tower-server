@@ -232,50 +232,45 @@ module.exports = class V1 {
 
         const Model = this.app.models.configurationModel;
 
-        const newVariables = [];
+        const query = [];
+        fullModel.forEach((model) => {
+            query.push({
+                name: configurationObject[model.name],
+            });
+        });
 
-        for (const variable of variables) {
-            const newVariable = variable;
+        const find = await Model.find({
+            where: {
+                or: query,
+            },
+        });
 
-            const query = [];
-            fullModel.forEach((model) => {
-                query.push({
-                    name: configurationObject[model.name],
+        const newVariables = new Map();
+
+        for (const base of fullModel) {
+            const currentModel = find.find((el) => {
+                return el.base === base.name;
+            });
+
+            for (const variable of variables) {
+                const defaultVariable = currentModel.defaultValues.find((el) => {
+                    return variable.name === el.name;
                 });
-            });
 
-            const find = await Model.find({
-                where: {
-                    or: query,
-                    defaultValues: {elemMatch: {name: variable.name}},
-                },
-            });
-
-            if (find.length > 0) {
-                let outValue = '';
-                fullModel.forEach( (model) => {
-                    const out = find.find( (el) => {
-                        return el.base === model.name;
-                    });
-
-                    if (out !== undefined && out !== null) {
-                        outValue = out;
+                if (defaultVariable !== undefined) {
+                    variable.value = defaultVariable.value;
+                    newVariables.set(variable.name, variable);
+                } else {
+                    if (!newVariables.has(variable.name)) {
+                        newVariables.set(variable.name, variable);
                     }
-                });
-
-                outValue = outValue.defaultValues.find( (el) => {
-                    return el.name === variable.name;
-                });
-
-                newVariable.value = outValue.value;
+                }
             }
-
-            newVariables.push(newVariable);
-        };
+        }
 
         this.log('debug', 'updateVariablesWithDefaults', 'FINISHED');
 
-        return newVariables;
+        return newVariables.values();
     }
 
     /**
@@ -335,6 +330,7 @@ module.exports = class V1 {
         });
 
         values.draft = false;
+        values.deleted = false;
 
         const Config = new ConfigurationClass(this.app);
         const BaseConfiguration = this.app.models.baseConfiguration;

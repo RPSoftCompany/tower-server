@@ -34,6 +34,7 @@ module.exports = function(promotion) {
     initiate(promotion);
 
     promotion.disableRemoteMethodByName('upsert'); // PATCH
+    promotion.disableRemoteMethodByName('createChangeStream');
 
     promotion.patch = async (obj) => {
         return await promModel.patchObject(obj);
