@@ -51,7 +51,7 @@ describe('Group', () => {
         });
         describe('POST/{id}/role', () => {
             it(`should return 200`, async () => {
-                const group = await axios.post(`${url}/groups/${id}/role?role=configuration.edit`, undefined, {
+                const group = await axios.post(`${url}/groups/${id}/role?role=configuration.modify`, undefined, {
                     headers: {Authorization: token},
                 });
 
@@ -60,7 +60,7 @@ describe('Group', () => {
         });
         describe('DELETE/{id}/role', () => {
             it(`should return 200`, async () => {
-                const group = await axios.delete(`${url}/groups/${id}/role?role=configuration.edit`, {
+                const group = await axios.delete(`${url}/groups/${id}/role?role=configuration.modify`, {
                     headers: {Authorization: token},
                 });
 

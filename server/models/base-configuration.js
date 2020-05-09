@@ -26,7 +26,7 @@ const initiate = (main) => {
     } else {
         setTimeout( () => {
             initiate(main);
-        }, 1000);
+        }, 200);
     }
 };
 

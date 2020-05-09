@@ -25,7 +25,7 @@ const initiate = (main) => {
         if (main.app.dataSources['mongoDB'] === undefined) {
             setTimeout( () => {
                 initiate(main);
-            }, 1000);
+            }, 200);
         } else {
             if (main.app.dataSources['mongoDB'].connected) {
                 hookObject = new HookModel(main.app);
@@ -33,13 +33,13 @@ const initiate = (main) => {
             } else {
                 setTimeout( () => {
                     initiate(main);
-                }, 1000);
+                }, 200);
             }
         }
     } else {
         setTimeout( () => {
             initiate(main);
-        }, 1000);
+        }, 200);
     }
 };
 

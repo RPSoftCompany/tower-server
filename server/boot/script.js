@@ -46,6 +46,12 @@ module.exports = async (app) => {
     {
         name: 'configuration.modify',
     },
+    {
+        name: 'configurationModel.view',
+    },
+    {
+        name: 'configurationModel.modify',
+    },
     ];
 
     for (role of rolesList) {

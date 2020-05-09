@@ -22,11 +22,23 @@ let group = null;
 
 const initiate = (main) => {
     if (main.app !== undefined) {
-        group = new GroupModel(main.app);
+        if (main.app.dataSources['mongoDB'] === undefined) {
+            setTimeout( () => {
+                initiate(main);
+            }, 200);
+        } else {
+            if (main.app.dataSources['mongoDB'].connected) {
+                group = new GroupModel(main.app);
+            } else {
+                setTimeout( () => {
+                    initiate(main);
+                }, 200);
+            }
+        }
     } else {
         setTimeout( () => {
             initiate(main);
-        }, 1000);
+        }, 200);
     }
 };
 

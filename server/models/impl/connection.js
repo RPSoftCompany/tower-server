@@ -215,7 +215,8 @@ module.exports = class Connection {
             }
             connection.bindCredentials = configuration.encryptPassword(connection.bindCredentials);
         } else if (connection.system === 'Vault') {
-            if (connection.globalToken !== undefined && connection.globalToken !== null && connection.globalToken !== '') {
+            if (connection.globalToken !== undefined && connection.globalToken !== null &&
+                connection.globalToken !== '') {
                 connection.globalToken = configuration.encryptPassword(connection.globalToken);
             }
 

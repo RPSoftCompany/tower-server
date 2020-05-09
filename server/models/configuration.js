@@ -24,13 +24,25 @@ let configModel = null;
 
 const initiate = (main) => {
     if (main.app !== undefined) {
-        configModel = new ConfigModel(main.app);
-        configModel.autoInitialize();
-        hook(main);
+        if (main.app.dataSources['mongoDB'] === undefined) {
+            setTimeout( () => {
+                initiate(main);
+            }, 200);
+        } else {
+            if (main.app.dataSources['mongoDB'].connected && main.app.nonSafe !== undefined) {
+                configModel = new ConfigModel(main.app);
+                configModel.autoInitialize();
+                hook(main);
+            } else {
+                setTimeout( () => {
+                    initiate(main);
+                }, 200);
+            }
+        }
     } else {
         setTimeout( () => {
             initiate(main);
-        }, 1000);
+        }, 200);
     }
 };
 
@@ -44,7 +56,7 @@ const hook = (main) => {
     } else {
         setTimeout( () => {
             hook(main);
-        }, 1000);
+        }, 200);
     }
 };
 

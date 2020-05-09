@@ -35,6 +35,8 @@ module.exports = class Configuration {
         this.cryptr = null;
 
         this.app = app;
+
+        app.set('ConfigurationInstance', this);
     }
 
     /**
@@ -56,6 +58,8 @@ module.exports = class Configuration {
         } else {
             if (this.logger !== undefined) {
                 this.logger.log(severity, `${this.configurationName}.${method} ${message}`);
+            } else {
+                console.log(`${this.configurationName}.${method} ${message}`);
             }
         }
     }
@@ -66,7 +70,14 @@ module.exports = class Configuration {
     async createCrypt() {
         if (this.cryptr === null) {
             if (this.app.secret === undefined) {
-                throw new HttpErrors.BadRequest(`Secret not initialized`);
+                if (this.app.nonSafe) {
+                    await this.autoInitialize();
+                    if (this.cryptr === null) {
+                        throw new HttpErrors.BadRequest(`Secret not initialized`);
+                    }
+                } else {
+                    throw new HttpErrors.BadRequest(`Secret not initialized`);
+                }
             }
 
             this.cryptr = this.app.secret;
@@ -77,7 +88,7 @@ module.exports = class Configuration {
      * Auto initialize (While using nonSafe option, secret is stored in file in Tower directory)
      *
      */
-    autoInitialize() {
+    async autoInitialize() {
         this.log('debug', 'autoInitialize', 'STARTED');
         if (this.app.nonSafe) {
             let secretPath = './secret';
@@ -86,7 +97,7 @@ module.exports = class Configuration {
             }
             if (fs.existsSync(secretPath)) {
                 const secret = fs.readFileSync(secretPath, 'utf8');
-                this.initializeSecret(secret);
+                await this.initializeSecret(secret);
             }
         }
         this.log('debug', 'autoInitialize', 'FINISHED');
@@ -281,16 +292,12 @@ module.exports = class Configuration {
         for (const base of allBases) {
             if (config[base.name] !== undefined) {
                 basesObj[base.name] = config[base.name];
-                const model = await configModel.findOneWithPermissions({
-                    where: {
-                        base: base.name,
-                        name: config[base.name],
-                    },
-                }, options);
 
-                if (model === null) {
+                const hasPermissions = await configModel.validateWritePermissions(basesObj[base.name], userId);
+
+                if (!hasPermissions) {
                     this.log('debug', 'createConfiguration', 'FINISHED');
-                    throw new HttpErrors.BadRequest(`Configuration model ${config[base.name]} does not exist`);
+                    throw new HttpErrors.BadRequest(`No permissions to write to ${config[base.name]} model`);
                 }
 
                 newObject[base.name] = config[base.name];

@@ -170,7 +170,7 @@ module.exports = class Group {
             throw new HttpErrors.BadRequest('Invalid role name');
         }
 
-        if (!group.roles.includes(role)) {
+        if (group.roles.includes(role)) {
             group.roles.splice(group.roles.indexOf(role), 1);
             await group.save();
         }

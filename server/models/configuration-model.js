@@ -28,7 +28,7 @@ const initiate = (main) => {
     } else {
         setTimeout( () => {
             initiate(main);
-        }, 1000);
+        }, 200);
     }
 };
 
@@ -63,7 +63,7 @@ const hook = (main) => {
     } else {
         setTimeout( () => {
             hook(main);
-        }, 1000);
+        }, 200);
     }
 };
 

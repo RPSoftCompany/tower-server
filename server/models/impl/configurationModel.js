@@ -263,6 +263,27 @@ module.exports = class ConfigurationModel {
     }
 
     /**
+     * Validates if given user can save using this model
+     *
+     * @param {string} baseName base model name
+     * @param {string} configModelName model name
+     * @param {string} userId user id
+     *
+     * @return {boolean} true, if user can write with this model
+     */
+    async validateWritePermissions(baseName, configModelName, userId) {
+        this.log('debug', 'upsertConfigurationModel', 'STARTED');
+
+        const member = new MemberClass(this.app);
+        const roles = await member.getUserRoles(userId);
+
+        this.log('debug', 'upsertConfigurationModel', 'FINISHED');
+
+        return roles.includes(`configurationModel.${baseName}.${configModelName}.modify`) &&
+            roles.includes(`configurationModel.${baseName}.${configModelName}.view`);
+    }
+
+    /**
      * Updates or creates configuration model
      *
      * @param {configurationModel} model Model to add
