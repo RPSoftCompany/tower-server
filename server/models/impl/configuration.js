@@ -58,8 +58,6 @@ module.exports = class Configuration {
         } else {
             if (this.logger !== undefined) {
                 this.logger.log(severity, `${this.configurationName}.${method} ${message}`);
-            } else {
-                console.log(`${this.configurationName}.${method} ${message}`);
             }
         }
     }
@@ -293,7 +291,8 @@ module.exports = class Configuration {
             if (config[base.name] !== undefined) {
                 basesObj[base.name] = config[base.name];
 
-                const hasPermissions = await configModel.validateWritePermissions(basesObj[base.name], userId);
+                const hasPermissions = await configModel.validateWritePermissions(base.name,
+                    basesObj[base.name], userId);
 
                 if (!hasPermissions) {
                     this.log('debug', 'createConfiguration', 'FINISHED');
@@ -314,11 +313,13 @@ module.exports = class Configuration {
                 },
             }, options);
 
-            if (model.options !== null) {
-                if (model.options.hasRestrictions) {
-                    if (!model.restrictions.includes(config[base.name])) {
-                        this.log('debug', 'createConfiguration', 'FINISHED');
-                        throw new HttpErrors.BadRequest(`Model restrictions forbids this configuration`);
+            if (model !== null) {
+                if (model.options !== null) {
+                    if (model.options.hasRestrictions) {
+                        if (!model.restrictions.includes(config[base.name])) {
+                            this.log('debug', 'createConfiguration', 'FINISHED');
+                            throw new HttpErrors.BadRequest(`Model restrictions forbids this configuration`);
+                        }
                     }
                 }
             }
@@ -488,7 +489,7 @@ module.exports = class Configuration {
         }
 
         const BaseConfiguration = this.app.models.baseConfiguration;
-        const ConfigurationModel = this.app.models.configurationModel;
+        const ConfigurationModel = this.app.get('ConfModelInstance');
         const DefaultVariableHistory = this.app.models.defaultVariableHistory;
 
         filter.effectiveDate = {lt: givenDate};
@@ -516,11 +517,11 @@ module.exports = class Configuration {
         const defaultMap = new Map();
 
         for (const base of allBases) {
-            const model = await ConfigurationModel.findOne({
+            const model = await ConfigurationModel.findOneWithPermissions({
                 where: {
                     name: candConfig[base.name],
                 },
-            });
+            }, options);
 
             const history = await DefaultVariableHistory.findOne({
                 where: {

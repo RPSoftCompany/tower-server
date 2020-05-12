@@ -23,8 +23,21 @@ let configModel = null;
 
 const initiate = (main) => {
     if (main.app !== undefined) {
-        configModel = new ConfigModel(main.app);
-        hook(main);
+        if (main.app.dataSources['mongoDB'] === undefined) {
+            setTimeout( () => {
+                initiate(main);
+            }, 200);
+        } else {
+            if (main.app.dataSources['mongoDB'].connected) {
+                configModel = new ConfigModel(main.app);
+                configModel.createCache();
+                hook(main);
+            } else {
+                setTimeout( () => {
+                    initiate(main);
+                }, 200);
+            }
+        }
     } else {
         setTimeout( () => {
             initiate(main);
@@ -69,8 +82,6 @@ const hook = (main) => {
 
 module.exports = function(Configurationmodel) {
     initiate(Configurationmodel);
-
-    // Configurationmodel.validatesUniquenessOf('name', {message: 'Name is not unique'});
 
     Configurationmodel.disableRemoteMethodByName('create'); // POST
     Configurationmodel.disableRemoteMethodByName('find'); // GET
@@ -186,7 +197,7 @@ module.exports = function(Configurationmodel) {
     });
 
     Configurationmodel.remoteMethod('createConfigurationModel', {
-        http: {verb: 'POST', status: 201, path: '/'},
+        http: {verb: 'POST', status: 200, path: '/'},
         accepts: [
             {arg: 'model', type: 'configurationModel', http: {source: 'body'}},
             {arg: 'options', type: 'object', http: 'optionsFromRequest'},
@@ -196,13 +207,12 @@ module.exports = function(Configurationmodel) {
     });
 
     Configurationmodel.remoteMethod('deleteModel', {
-        http: {verb: 'DELETE', status: 200, path: '/:id'},
+        http: {verb: 'DELETE', status: 204, path: '/:id'},
         accepts: [
             {arg: 'id', type: 'string', http: {source: 'path'}},
             {arg: 'options', type: 'object', http: 'optionsFromRequest'},
         ],
-        description: 'Replace an existing model instance or insert a new one into the data source.',
-        returns: {arg: 'rule', type: 'rule', root: true},
+        description: 'Delete a model instance by {{id}} from the data source',
     });
 
     Configurationmodel.remoteMethod('addRule', {

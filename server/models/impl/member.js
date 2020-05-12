@@ -30,6 +30,9 @@ module.exports = class Member {
         this.app = app;
 
         this.ldapClient = null;
+
+        this.rolesCache = [];
+        this.groupCache = [];
     }
 
     /**
@@ -50,6 +53,30 @@ module.exports = class Member {
         } else {
             this.logger.log(severity, `${this.configurationName}.${method} ${message}`);
         }
+    }
+
+    /**
+     * creates local cache
+     *
+     */
+    async createCache() {
+        const Role = this.app.models.Role;
+        const Group = this.app.models.group;
+
+        this.groupCache = await Group.find();
+        this.rolesCache = await Role.find();
+
+        const changeStream = this.app.dataSources['mongoDB'].connector.collection('Role').watch();
+        changeStream.on('change', async () => {
+            this.rolesCache = await Role.find();
+        });
+
+        const groupChangeStream = this.app.dataSources['mongoDB'].connector.collection('group').watch();
+        groupChangeStream.on('change', async () => {
+            this.groupCache = await Group.find();
+        });
+
+        this.app.set('MemberInstance', this);
     }
 
     /**
@@ -349,7 +376,10 @@ module.exports = class Member {
         this.log('debug', 'getUserRoles', 'STARTED');
 
         const Member = this.app.models.member;
-        const Group = this.app.models.group;
+
+        if (userId === undefined || userId === '' || userId === null) {
+            return [];
+        }
 
         const user = await Member.findOne({
             where: {
@@ -357,12 +387,8 @@ module.exports = class Member {
             },
         });
 
-        const groups = await Group.find({
-            where: {
-                name: {
-                    inq: user.groups,
-                },
-            },
+        const groups = this.groupCache.filter( (el) => {
+            return user.groups.includes(el.name);
         });
 
         const roles = new Set();
@@ -373,6 +399,12 @@ module.exports = class Member {
                 });
             }
         });
+
+        if (user.username === 'admin' || roles.has('admin')) {
+            this.rolesCache.forEach( (role) => {
+                roles.add(role.name);
+            });
+        }
 
         this.log('debug', 'getUserRoles', 'FINISHED');
 

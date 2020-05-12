@@ -23,7 +23,20 @@ let member = null;
 
 const initiate = (main) => {
     if (main.app !== undefined) {
-        member = new MemberClass(main.app);
+        if (main.app.dataSources['mongoDB'] === undefined) {
+            setTimeout( () => {
+                initiate(main);
+            }, 200);
+        } else {
+            if (main.app.dataSources['mongoDB'].connected && main.app.nonSafe !== undefined) {
+                member = new MemberClass(main.app);
+                member.createCache();
+            } else {
+                setTimeout( () => {
+                    initiate(main);
+                }, 200);
+            }
+        }
     } else {
         setTimeout( () => {
             initiate(main);

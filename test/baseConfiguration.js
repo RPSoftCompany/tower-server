@@ -189,7 +189,8 @@ describe('BaseConfiguration', () => {
         });
         describe('POST/upsertWithWhere', () => {
             it(`should return 200`, async () => {
-                const configuration = await axios.post(`${url}/baseConfigurations/upsertWithWhere?where={"id":"${id}"}`, {
+                const configuration = await axios.post(`${url}/baseConfigurations/upsertWithWhere?where={"id":"${
+                    id}"}`, {
                     'name': 'string1010',
                     'sequenceNumber': 7,
                     'icon': 'string',
@@ -427,7 +428,8 @@ describe('BaseConfiguration', () => {
         });
         describe('POST/upsertWithWhere', () => {
             it(`should return 200`, async () => {
-                const configuration = await axios.post(`${url}/baseConfigurations/upsertWithWhere?where={"id":"${id}"}`, {
+                const configuration = await axios.post(`${url}/baseConfigurations/upsertWithWhere?where={"id":"${
+                    id}"}`, {
                     'name': 'string1010',
                     'sequenceNumber': 7,
                     'icon': 'string',
@@ -445,7 +447,7 @@ describe('BaseConfiguration', () => {
 
     describe('Unauthorized', () => {
         describe('PATCH', () => {
-            it(`/ should return 200`, async () => {
+            it(`/ should return 401`, async () => {
                 try {
                     await axios.patch(`${url}/baseConfigurations`, {
                         'name': 'string',
@@ -459,13 +461,16 @@ describe('BaseConfiguration', () => {
             });
         });
         describe('GET', () => {
-            it(`/ should return 200`, async () => {
-                const configuration = await axios.get(`${url}/baseConfigurations`);
-                should(configuration.status).equal(200);
+            it(`/ should return 401`, async () => {
+                try {
+                    await axios.get(`${url}/baseConfigurations`);
+                } catch (e) {
+                    should(e.response.status).equal(401);
+                }
             });
         });
         describe('PUT', () => {
-            it(`/ should return 200`, async () => {
+            it(`/ should return 401`, async () => {
                 try {
                     await axios.put(`${url}/baseConfigurations`, {
                         'name': 'string',
@@ -479,7 +484,7 @@ describe('BaseConfiguration', () => {
             });
         });
         describe('POST', () => {
-            it(`/ should return 200`, async () => {
+            it(`/ should return 401`, async () => {
                 try {
                     await axios.post(`${url}/baseConfigurations`, {
                         'name': 'string',

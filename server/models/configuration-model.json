@@ -33,7 +33,8 @@
       "required": true
     },
     "options": {
-      "type": "modelOptions"
+      "type": "modelOptions",
+      "required": true
     },
     "deleted": {
       "type": "boolean",

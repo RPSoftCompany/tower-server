@@ -15,7 +15,6 @@
 //    along with Tower.  If not, see <http://www.gnu.org/licenses/>.
 
 const HttpErrors = require('http-errors');
-const MemberClass = require('./member.js');
 
 module.exports = class ConfigurationModel {
     /**
@@ -28,6 +27,8 @@ module.exports = class ConfigurationModel {
         this.logger = null;
 
         this.app = app;
+
+        this.confModelCache = [];
     }
 
     /**
@@ -52,6 +53,23 @@ module.exports = class ConfigurationModel {
     }
 
     /**
+     * creates local cache
+     *
+     */
+    async createCache() {
+        const ConfigurationModel = this.app.models.configurationModel;
+
+        this.confModelCache = await ConfigurationModel.find();
+
+        const changeStream = this.app.dataSources['mongoDB'].connector.collection('configurationModel').watch();
+        changeStream.on('change', async () => {
+            this.confModelCache = await ConfigurationModel.find();
+        });
+
+        this.app.set('ConfModelInstance', this);
+    }
+
+    /**
      * Works exectly the same as find, but filters data depanding on user
      *
      * @param {object} filter regular filter
@@ -64,7 +82,6 @@ module.exports = class ConfigurationModel {
         this.log('debug', 'findWithPermissions', 'STARTED');
 
         const Role = this.app.models.Role;
-        const Member = this.app.models.member;
         const ConfigModel = this.app.models.configurationModel;
 
         if (showDeleted === undefined || !showDeleted) {
@@ -98,18 +115,7 @@ module.exports = class ConfigurationModel {
             roleSet.add(role.name);
         });
 
-        const user = await Member.findOne({
-            where: {
-                id: userId,
-            },
-        });
-
-        if (user.username === 'admin') {
-            this.log('debug', 'findWithPermissions', 'FINISHED');
-            return ret;
-        }
-
-        const member = new MemberClass(this.app);
+        const member = this.app.get('MemberInstance');
 
         const userRoles = await member.getUserRoles(userId);
 
@@ -161,22 +167,17 @@ module.exports = class ConfigurationModel {
      *
      * @return {configurationModel} created model
      */
-    async createConfigurationModel(model) {
+    async createConfigurationModel(model, options) {
         this.log('debug', 'createConfigurationModel', 'STARTED');
-
-        this.app.hookSingleton.executeHook('beforeCreate', 'ConfigurationModel', model);
 
         model.deleted = false;
 
         let wasDeleted = false;
 
         const baseConfiguration = this.app.models.baseConfiguration;
-        const ConfigModel = this.app.models.configurationModel;
 
-        const exists = await ConfigModel.findOne({
-            where: {
-                name: model.name,
-            },
+        const exists = this.confModelCache.find( (el) => {
+            return el.name === model.name;
         });
 
         if (model.id !== undefined) {
@@ -184,7 +185,7 @@ module.exports = class ConfigurationModel {
             throw new HttpErrors.BadRequest(`New model shouldn't contain id`);
         }
 
-        if (exists !== null) {
+        if (exists !== undefined) {
             if (exists.deleted !== true) {
                 this.log('debug', 'createConfigurationModel', 'FINISHED');
                 throw new HttpErrors.BadRequest('Model with this name already exists');
@@ -192,6 +193,29 @@ module.exports = class ConfigurationModel {
                 wasDeleted = true;
             }
         }
+
+        if (model.base === undefined || model.base === null || model.base === '') {
+            this.log('debug', 'createConfigurationModel', 'FINISHED');
+            throw new HttpErrors.BadRequest('Base needs to be set');
+        }
+
+        const baseExists = await baseConfiguration.findOne({
+            where: {
+                name: model.base,
+            },
+        });
+
+        if (baseExists === null) {
+            this.log('debug', 'createConfigurationModel', 'FINISHED');
+            throw new HttpErrors.BadRequest(`Base configuration for ${model.base} does not exist`);
+        }
+
+        if (!await this.validateWritePermissions(model.base, model.name, options.accessToken.userId)) {
+            this.log('debug', 'createConfigurationModel', 'FINISHED');
+            throw new HttpErrors.Unauthorized();
+        }
+
+        this.app.hookSingleton.executeHook('beforeCreate', 'ConfigurationModel', model);
 
         if (model.rules !== undefined) {
             model.rules.map((rule) => {
@@ -233,17 +257,6 @@ module.exports = class ConfigurationModel {
             model.defaultValues = [];
         }
 
-        const baseExists = await baseConfiguration.findOne({
-            where: {
-                name: model.base,
-            },
-        });
-
-        if (baseExists === null) {
-            this.log('debug', 'createConfigurationModel', 'FINISHED');
-            throw new HttpErrors.BadRequest('Base configuration does not exist');
-        }
-
         if (wasDeleted) {
             await exists.updateAttributes(model);
             this.app.hookSingleton.executeHook('afterCreate', 'ConfigurationModel', exists);
@@ -272,12 +285,28 @@ module.exports = class ConfigurationModel {
      * @return {boolean} true, if user can write with this model
      */
     async validateWritePermissions(baseName, configModelName, userId) {
-        this.log('debug', 'upsertConfigurationModel', 'STARTED');
+        this.log('debug', 'validateWritePermissions', 'STARTED');
 
-        const member = new MemberClass(this.app);
+        const member = this.app.get('MemberInstance');
         const roles = await member.getUserRoles(userId);
 
-        this.log('debug', 'upsertConfigurationModel', 'FINISHED');
+        const specificPermissions = member.rolesCache.find( (role) => {
+            return role.name === `configurationModel.${baseName}.${configModelName}.modify`;
+        });
+
+        const hasWritePermissions = roles.includes(`baseConfigurations.${baseName}.view`);
+
+        if (!hasWritePermissions) {
+            this.log('debug', 'validateWritePermissions', 'FINISHED');
+            return false;
+        }
+
+        if (specificPermissions === undefined) {
+            this.log('debug', 'validateWritePermissions', 'FINISHED');
+            return true;
+        }
+
+        this.log('debug', 'validateWritePermissions', 'FINISHED');
 
         return roles.includes(`configurationModel.${baseName}.${configModelName}.modify`) &&
             roles.includes(`configurationModel.${baseName}.${configModelName}.view`);
@@ -312,6 +341,19 @@ module.exports = class ConfigurationModel {
             const roleName = `configurationModel.${model.name}.modify`;
             const oldModel = exists[0];
 
+            if (!await this.validateWritePermissions(oldModel.base, oldModel.name, options.accessToken.userId)) {
+                this.log('debug', 'removeVariable', 'FINISHED');
+                throw new HttpErrors.Unauthorized();
+            }
+
+            if (model.base !== undefined) {
+                const newModelName = model.name === undefined ? oldModel.name : model.name;
+                if (!await this.validateWritePermissions(model.base, newModelName, options.accessToken.userId)) {
+                    this.log('debug', 'removeVariable', 'FINISHED');
+                    throw new HttpErrors.Unauthorized();
+                }
+            }
+
             const role = await Role.findOne({
                 where: {
                     name: roleName,
@@ -344,7 +386,7 @@ module.exports = class ConfigurationModel {
                     });
                 }
             } else {
-                const member = new MemberClass(this.app);
+                const member = this.app.get('MemberInstance');
                 const userRoles = await member.getUserRoles(userId);
 
                 if (userRoles.includes(roleName)) {
@@ -383,8 +425,6 @@ module.exports = class ConfigurationModel {
     async deleteModel(modelId, options) {
         this.log('debug', 'deleteModel', 'STARTED');
 
-        this.app.hookSingleton.executeHook('beforeDelete', 'ConfigurationModel', modelId);
-
         const model = await this.findOneWithPermissions({
             where: {
                 id: modelId,
@@ -392,13 +432,20 @@ module.exports = class ConfigurationModel {
         }, options);
 
         if (model !== null && model !== undefined) {
+            if (!await this.validateWritePermissions(model.base, model.name, options.accessToken.userId)) {
+                this.log('debug', 'deleteModel', 'FINISHED');
+                throw new HttpErrors.Unauthorized();
+            }
+
+            this.app.hookSingleton.executeHook('beforeDelete', 'ConfigurationModel', modelId);
+
             model.deleted = true;
             await model.replaceAttributes(model, {
                 validate: false,
             });
-        }
 
-        this.app.hookSingleton.executeHook('afterDelete', 'ConfigurationModel', modelId);
+            this.app.hookSingleton.executeHook('afterDelete', 'ConfigurationModel', modelId);
+        }
 
         this.log('debug', 'deleteModel', 'FINISHED');
     }
@@ -415,11 +462,6 @@ module.exports = class ConfigurationModel {
     async addRule(modelId, rule, options) {
         this.log('debug', 'addRule', 'STARTED');
 
-        this.app.hookSingleton.executeHook('beforeAddRule', 'ConfigurationModel', {
-            modelId: modelId,
-            rule: rule,
-        });
-
         const model = await this.findOneWithPermissions({
             where: {
                 id: modelId,
@@ -430,6 +472,17 @@ module.exports = class ConfigurationModel {
             this.log('debug', 'addRule', 'FINISHED');
             throw new HttpErrors.BadRequest('Invalid model id');
         }
+
+        if (!await this.validateWritePermissions(model.base, model.name, options.accessToken.userId)) {
+            this.log('debug', 'addRule', 'FINISHED');
+            throw new HttpErrors.Unauthorized();
+        }
+
+        this.app.hookSingleton.executeHook('beforeAddRule', 'ConfigurationModel', {
+            modelId: modelId,
+            rule: rule,
+        });
+
 
         rule._id = '_' + Math.random().toString(36).substr(2, 15);
 
@@ -471,6 +524,11 @@ module.exports = class ConfigurationModel {
         if (model === null) {
             this.log('debug', 'removeRule', 'FINISHED');
             throw new HttpErrors.BadRequest('Invalid model id');
+        }
+
+        if (!await this.validateWritePermissions(model.base, model.name, options.accessToken.userId)) {
+            this.log('debug', 'removeRule', 'FINISHED');
+            throw new HttpErrors.Unauthorized();
         }
 
         model.rules = model.rules.filter((rule) => {
@@ -515,6 +573,11 @@ module.exports = class ConfigurationModel {
             throw new HttpErrors.BadRequest('Invalid model id');
         }
 
+        if (!await this.validateWritePermissions(model.base, model.name, options.accessToken.userId)) {
+            this.log('debug', 'modifyRule', 'FINISHED');
+            throw new HttpErrors.Unauthorized();
+        }
+
         let changedRule = null;
 
         model.rules = model.rules.map((el) => {
@@ -550,11 +613,6 @@ module.exports = class ConfigurationModel {
     async addDefaultVariable(modelId, variable, options) {
         this.log('debug', 'addDefaultVariable', 'STARTED');
 
-        this.app.hookSingleton.executeHook('beforeAddVariable', 'ConfigurationModel', {
-            modelId: modelId,
-            variable: variable,
-        });
-
         const model = await this.findOneWithPermissions({
             where: {
                 id: modelId,
@@ -565,6 +623,16 @@ module.exports = class ConfigurationModel {
             this.log('debug', 'addDefaultVariable', 'FINISHED');
             throw new HttpErrors.BadRequest('Invalid model id');
         }
+
+        if (!await this.validateWritePermissions(model.base, model.name, options.accessToken.userId)) {
+            this.log('debug', 'addDefaultVariable', 'FINISHED');
+            throw new HttpErrors.Unauthorized();
+        }
+
+        this.app.hookSingleton.executeHook('beforeAddVariable', 'ConfigurationModel', {
+            modelId: modelId,
+            variable: variable,
+        });
 
         const isIn = model.defaultValues.find((el) => {
             return el.name === variable.name;
@@ -652,6 +720,11 @@ module.exports = class ConfigurationModel {
         if (model === null) {
             this.log('debug', 'removeVariable', 'FINISHED');
             throw new HttpErrors.BadRequest('Invalid model id');
+        }
+
+        if (!await this.validateWritePermissions(model.base, model.name, options.accessToken.userId)) {
+            this.log('debug', 'removeVariable', 'FINISHED');
+            throw new HttpErrors.Unauthorized();
         }
 
         let variableName = '';
@@ -742,6 +815,11 @@ module.exports = class ConfigurationModel {
             throw new HttpErrors.BadRequest('Invalid model id');
         }
 
+        if (!await this.validateWritePermissions(model.base, model.name, options.accessToken.userId)) {
+            this.log('debug', 'modifyVariable', 'FINISHED');
+            throw new HttpErrors.Unauthorized();
+        }
+
         if (variable._id === undefined || variable._id === null) {
             this.log('debug', 'modifyVariable', 'FINISHED');
             throw new HttpErrors.BadRequest('Invalid variable id');
@@ -829,6 +907,11 @@ module.exports = class ConfigurationModel {
             throw new HttpErrors.BadRequest('Invalid model id');
         }
 
+        if (!await this.validateWritePermissions(model.base, model.name, options.accessToken.userId)) {
+            this.log('debug', 'modifyModelOptions', 'FINISHED');
+            throw new HttpErrors.Unauthorized();
+        }
+
         model.options = modelOptions;
 
         await model.save();
@@ -857,6 +940,11 @@ module.exports = class ConfigurationModel {
         if (model === null) {
             this.log('debug', 'addRestriction', 'FINISHED');
             throw new HttpErrors.BadRequest('Invalid model id');
+        }
+
+        if (!await this.validateWritePermissions(model.base, model.name, options.accessToken.userId)) {
+            this.log('debug', 'addRestriction', 'FINISHED');
+            throw new HttpErrors.Unauthorized();
         }
 
         if (model.restrictions === undefined) {
@@ -896,6 +984,11 @@ module.exports = class ConfigurationModel {
         if (model === null) {
             this.log('debug', 'removeRestriction', 'FINISHED');
             throw new HttpErrors.BadRequest('Invalid model id');
+        }
+
+        if (!await this.validateWritePermissions(model.base, model.name, options.accessToken.userId)) {
+            this.log('debug', 'removeRestriction', 'FINISHED');
+            throw new HttpErrors.Unauthorized();
         }
 
         if (model.restrictions === undefined) {

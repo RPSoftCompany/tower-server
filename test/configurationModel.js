@@ -63,7 +63,7 @@ describe('Configuration Model', () => {
                     headers: {Authorization: token},
                 });
 
-                should(configuration.status).equal(201);
+                should(configuration.status).equal(200);
 
                 id = configuration.data.id;
             });

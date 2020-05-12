@@ -532,7 +532,6 @@ class If extends InterpreterCommon {
             return varValue < condition;
         } else if (sign === '~=') {
             const regex = new RegExp(condition);
-            // console.log(condition);
             return regex.test(varValue);
         } else {
             throw new Error(`Invalid sign '${sign}' in if statement`);

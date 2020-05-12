@@ -84,6 +84,8 @@ if (process.env.NODE_ENV === 'development' || process.env.NODE_ENV === 'test') {
     nonSafe = true;
 }
 
+app.nonSafe = nonSafe;
+
 const tokenHeaders = mainConfig.config.tokenHeaders === undefined ? [] : mainConfig.config.tokenHeaders;
 
 const winstonFormat = winston.format.printf(({level, message, _label, timestamp}) => {
@@ -108,6 +110,8 @@ const logger = (module.exports = winston.createLogger({
     ),
 }));
 
+app.set('winston', logger);
+
 app.start = () => {
     let server = null;
     let httpOnly = true;
@@ -130,8 +134,6 @@ app.start = () => {
 
     // start the web server
     return server.listen(app.get('port'), function() {
-        app.set('winston', logger);
-
         const baseUrl = (httpOnly ? 'http://' : 'https://') + app.get('host') + ':' + app.get('port');
         app.emit('started');
         // const baseUrl = app.get('url').replace(/\/$/, '');
@@ -145,8 +147,6 @@ app.start = () => {
             headers: ['Authorization', ...tokenHeaders],
             params: ['access_token'],
         }));
-
-        app.nonSafe = nonSafe;
 
         console.log();
         console.log('============================================================');

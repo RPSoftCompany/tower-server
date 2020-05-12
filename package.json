@@ -48,8 +48,8 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "start": "NODE_ENV=development nodemon --ignore 'test/*.js' .",
-    "startTest": "NODE_ENV=test nodemon --ignore 'test/*.js' .",
+    "start": "NODE_ENV=development nodemon --ignore 'test/' .",
+    "startTest": "NODE_ENV=test nodemon --ignore 'test/' .",
     "test": "mocha --growl",
     "testScenarios": "mocha --growl test/scenarios/**/*.js",
     "package": "pkg --out-path ../tower-dist ."
