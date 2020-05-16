@@ -5,6 +5,7 @@ const url = 'http://localhost:3000/api';
 
 let id = null;
 let token = null;
+const name = Math.random().toString(36).replace(/[^a-z]+/g, '');
 describe('BaseConfiguration', () => {
     before(async () => {
         const temp = await axios.post(`${url}/members/login`, {
@@ -18,7 +19,7 @@ describe('BaseConfiguration', () => {
         describe('POST', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.post(`${url}/baseConfigurations`, {
-                    'name': 'string',
+                    'name': name,
                     'sequenceNumber': 0,
                     'icon': 'string',
                 }, {
@@ -33,7 +34,7 @@ describe('BaseConfiguration', () => {
         describe('PATCH', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.patch(`${url}/baseConfigurations`, {
-                    'name': 'string',
+                    'name': name,
                     'sequenceNumber': 0,
                     'icon': 'string',
                     'id': id,
@@ -47,7 +48,7 @@ describe('BaseConfiguration', () => {
         describe('PUT', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.put(`${url}/baseConfigurations`, {
-                    'name': 'string',
+                    'name': name,
                     'sequenceNumber': 0,
                     'icon': 'string',
                     'id': id,
@@ -61,7 +62,7 @@ describe('BaseConfiguration', () => {
         describe('PATCH/{id}', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.patch(`${url}/baseConfigurations/${id}`, {
-                    'name': 'string',
+                    'name': name,
                     'sequenceNumber': 0,
                     'icon': 'string',
                     'id': id,
@@ -75,7 +76,7 @@ describe('BaseConfiguration', () => {
         describe('PUT/{id}', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.put(`${url}/baseConfigurations/${id}`, {
-                    'name': 'string',
+                    'name': name,
                     'sequenceNumber': 0,
                     'icon': 'string',
                     'id': id,
@@ -108,7 +109,7 @@ describe('BaseConfiguration', () => {
         describe('POST/{id}/replace', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.post(`${url}/baseConfigurations/${id}/replace`, {
-                    'name': 'string1',
+                    'name': `${name}1`,
                     'sequenceNumber': 0,
                     'icon': 'string',
                 }, {
@@ -121,7 +122,7 @@ describe('BaseConfiguration', () => {
         describe('POST/changeSequence', () => {
             it(`should return 204`, async () => {
                 const configuration = await axios.post(`${url}/baseConfigurations/changeSequence`, {
-                    'name': 'string1',
+                    'name': `${name}1`,
                     'sequenceNumber': 2,
                     'icon': 'string',
                     'id': id,
@@ -163,7 +164,7 @@ describe('BaseConfiguration', () => {
         describe('POST/replaceOrCreate', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.post(`${url}/baseConfigurations/replaceOrCreate`, {
-                    'name': 'string10',
+                    'name': `${name}10`,
                     'sequenceNumber': 0,
                     'icon': 'string',
                     'id': id,
@@ -177,7 +178,7 @@ describe('BaseConfiguration', () => {
         describe('POST/update', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.post(`${url}/baseConfigurations/update?where={"id":"${id}"}`, {
-                    'name': 'string101',
+                    'name': `${name}101`,
                     'sequenceNumber': 0,
                     'icon': 'string',
                 }, {
@@ -191,7 +192,7 @@ describe('BaseConfiguration', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.post(`${url}/baseConfigurations/upsertWithWhere?where={"id":"${
                     id}"}`, {
-                    'name': 'string1010',
+                    'name': `${name}1010`,
                     'sequenceNumber': 7,
                     'icon': 'string',
                 }, {
@@ -215,7 +216,7 @@ describe('BaseConfiguration', () => {
         describe('POST', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.post(`${url}/baseConfigurations`, {
-                    'name': 'string',
+                    'name': `${name}`,
                     'sequenceNumber': 0,
                     'icon': 'string',
                 }, {
@@ -233,7 +234,7 @@ describe('BaseConfiguration', () => {
         describe('PATCH', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.patch(`${url}/baseConfigurations`, {
-                    'name': 'string',
+                    'name': `${name}`,
                     'sequenceNumber': 0,
                     'icon': 'string',
                     'id': id,
@@ -250,7 +251,7 @@ describe('BaseConfiguration', () => {
         describe('PUT', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.put(`${url}/baseConfigurations`, {
-                    'name': 'string',
+                    'name': `${name}`,
                     'sequenceNumber': 0,
                     'icon': 'string',
                     'id': id,
@@ -267,7 +268,7 @@ describe('BaseConfiguration', () => {
         describe('PATCH/{id}', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.patch(`${url}/baseConfigurations/${id}`, {
-                    'name': 'string',
+                    'name': `${name}`,
                     'sequenceNumber': 0,
                     'icon': 'string',
                     'id': id,
@@ -284,7 +285,7 @@ describe('BaseConfiguration', () => {
         describe('PUT/{id}', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.put(`${url}/baseConfigurations/${id}`, {
-                    'name': 'string',
+                    'name': `${name}`,
                     'sequenceNumber': 0,
                     'icon': 'string',
                     'id': id,
@@ -326,7 +327,7 @@ describe('BaseConfiguration', () => {
         describe('POST/{id}/replace', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.post(`${url}/baseConfigurations/${id}/replace`, {
-                    'name': 'string1',
+                    'name': `${name}1`,
                     'sequenceNumber': 0,
                     'icon': 'string',
                 }, {
@@ -342,7 +343,7 @@ describe('BaseConfiguration', () => {
         describe('POST/changeSequence', () => {
             it(`should return 204`, async () => {
                 const configuration = await axios.post(`${url}/baseConfigurations/changeSequence`, {
-                    'name': 'string1',
+                    'name': `${name}1`,
                     'sequenceNumber': 2,
                     'icon': 'string',
                     'id': id,
@@ -396,7 +397,7 @@ describe('BaseConfiguration', () => {
         describe('POST/replaceOrCreate', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.post(`${url}/baseConfigurations/replaceOrCreate`, {
-                    'name': 'string10',
+                    'name': `${name}10`,
                     'sequenceNumber': 0,
                     'icon': 'string',
                     'id': id,
@@ -413,7 +414,7 @@ describe('BaseConfiguration', () => {
         describe('POST/update', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.post(`${url}/baseConfigurations/update?where={"id":"${id}"}`, {
-                    'name': 'string101',
+                    'name': `${name}101`,
                     'sequenceNumber': 0,
                     'icon': 'string',
                 }, {
@@ -430,7 +431,7 @@ describe('BaseConfiguration', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.post(`${url}/baseConfigurations/upsertWithWhere?where={"id":"${
                     id}"}`, {
-                    'name': 'string1010',
+                    'name': `${name}1010`,
                     'sequenceNumber': 7,
                     'icon': 'string',
                 }, {
@@ -450,7 +451,7 @@ describe('BaseConfiguration', () => {
             it(`/ should return 401`, async () => {
                 try {
                     await axios.patch(`${url}/baseConfigurations`, {
-                        'name': 'string',
+                        'name': `${name}`,
                         'sequenceNumber': 0,
                         'icon': 'string',
                         'id': 'string',
@@ -473,7 +474,7 @@ describe('BaseConfiguration', () => {
             it(`/ should return 401`, async () => {
                 try {
                     await axios.put(`${url}/baseConfigurations`, {
-                        'name': 'string',
+                        'name': `${name}`,
                         'sequenceNumber': 0,
                         'icon': 'string',
                         'id': 'string',
@@ -487,7 +488,7 @@ describe('BaseConfiguration', () => {
             it(`/ should return 401`, async () => {
                 try {
                     await axios.post(`${url}/baseConfigurations`, {
-                        'name': 'string',
+                        'name': `${name}`,
                         'sequenceNumber': 0,
                         'icon': 'string',
                         'id': 'string',
@@ -501,7 +502,7 @@ describe('BaseConfiguration', () => {
             it(`should return 401`, async () => {
                 try {
                     await axios.patch(`${url}/baseConfigurations/${id}`, {
-                        'name': 'string',
+                        'name': `${name}`,
                         'sequenceNumber': 0,
                         'icon': 'string',
                         'id': id,
@@ -515,7 +516,7 @@ describe('BaseConfiguration', () => {
             it(`should return 401`, async () => {
                 try {
                     await axios.put(`${url}/baseConfigurations/${id}`, {
-                        'name': 'string',
+                        'name': `${name}`,
                         'sequenceNumber': 0,
                         'icon': 'string',
                         'id': id,
@@ -547,7 +548,7 @@ describe('BaseConfiguration', () => {
             it(`should return 401`, async () => {
                 try {
                     await axios.post(`${url}/baseConfigurations/${id}/replace`, {
-                        'name': 'string1',
+                        'name': `${name}1`,
                         'sequenceNumber': 0,
                         'icon': 'string',
                     });
@@ -560,7 +561,7 @@ describe('BaseConfiguration', () => {
             it(`should return 401`, async () => {
                 try {
                     await axios.post(`${url}/baseConfigurations/changeSequence`, {
-                        'name': 'string1',
+                        'name': `${name}1`,
                         'sequenceNumber': 2,
                         'icon': 'string',
                         'id': id,
@@ -601,7 +602,7 @@ describe('BaseConfiguration', () => {
             it(`should return 401`, async () => {
                 try {
                     await axios.post(`${url}/baseConfigurations/replaceOrCreate`, {
-                        'name': 'string10',
+                        'name': `${name}10`,
                         'sequenceNumber': 0,
                         'icon': 'string',
                         'id': id,
@@ -615,7 +616,7 @@ describe('BaseConfiguration', () => {
             it(`should return 401`, async () => {
                 try {
                     await axios.post(`${url}/baseConfigurations/update?where={"id":"${id}"}`, {
-                        'name': 'string101',
+                        'name': `${name}101`,
                         'sequenceNumber': 0,
                         'icon': 'string',
                     });
@@ -628,7 +629,7 @@ describe('BaseConfiguration', () => {
             it(`should return 401`, async () => {
                 try {
                     await axios.post(`${url}/baseConfigurations/upsertWithWhere?where={"id":"${id}"}`, {
-                        'name': 'string1010',
+                        'name': `${name}1010`,
                         'sequenceNumber': 7,
                         'icon': 'string',
                     });

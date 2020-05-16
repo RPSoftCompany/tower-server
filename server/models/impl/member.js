@@ -104,6 +104,16 @@ module.exports = class Member {
         }
     }
 
+
+    /**
+     * Sleep function for invalid login
+     *
+     * @param {int} ms
+     */
+    async sleep(ms) {
+        return new Promise((resolve) => setTimeout(resolve, ms));
+    }
+
     /**
      * login
      *
@@ -222,7 +232,16 @@ module.exports = class Member {
 
             credentials.ttl = ttl;
 
-            const user = await User.login(credentials, include);
+            let user = null;
+
+            try {
+                user = await User.login(credentials, include);
+            } catch (e) {
+                if (e.code !== undefined && e.code === 'LOGIN_FAILED') {
+                    await this.sleep(1000);
+                }
+                throw e;
+            }
 
             const output = {
                 ttl: user.ttl,

@@ -499,7 +499,7 @@ class If extends InterpreterCommon {
                 return el.varName === variable.name;
             });
 
-            if (varValue !== null) {
+            if (varValue !== null && varValue !== undefined) {
                 varValue = varValue[variable.prop];
             }
         }
@@ -619,7 +619,7 @@ class ForEach extends InterpreterCommon {
 
             this.variables.pop();
 
-            if (this.returnsJson) {
+            if (this.returnsJson && response.text.trim().length > 0) {
                 response.text += ',';
             }
         }

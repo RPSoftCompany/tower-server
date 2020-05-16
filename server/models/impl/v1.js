@@ -270,7 +270,7 @@ module.exports = class V1 {
 
         this.log('debug', 'updateVariablesWithDefaults', 'FINISHED');
 
-        return newVariables.values();
+        return Array.from(newVariables.values());
     }
 
     /**
