@@ -4,14 +4,8 @@ module.exports = {
         connector: 'memory',
     },
     mongoDB: {
-        hostname: process.env.DB_HOST || 'localhost',
-        port: process.env.DB_PORT || 27017,
-        database: 'tower',
-        password: process.env.DB_PASSWORD || '',
+        url: 'mongodb://localhost:27017,localhost:27018,localhost:27019/test?replicaSet=rs0',
         name: 'mongoDB',
-        useNewUrlParser: 'true',
-        useUnifiedTopology: true,
-        user: process.env.DB_USER || '',
         connector: 'mongodb',
     },
 };
