@@ -66,32 +66,12 @@ module.exports = class BaseConfiguration {
         }
 
         const baseConfiguration = this.app.models.baseConfiguration;
-        const role = this.app.models.Role;
+        // const role = this.app.models.Role;
         const all = await baseConfiguration.count();
 
         baseConfig.sequenceNumber = all;
 
         await baseConfig.save();
-
-        await role.findOrCreate(
-            {
-                where: {
-                    name: `baseConfigurations.${baseConfig.name}.view`,
-                }},
-            {
-                name: `baseConfigurations.${baseConfig.name}.view`,
-            }
-        );
-
-        await role.findOrCreate(
-            {
-                where: {
-                    name: `baseConfigurations.${baseConfig.name}.modify`,
-                }},
-            {
-                name: `baseConfigurations.${baseConfig.name}.modify`,
-            }
-        );
 
         this.log('debug', 'createBaseConfiguration', 'FINISHED');
 

@@ -23,7 +23,7 @@ const V1 = require('./impl/v1.js');
 let v1Model = null;
 
 const initiate = (main) => {
-    if (main.app !== undefined) {
+    if (main.app !== undefined && main.app.booted) {
         v1Model = new V1(main.app);
     } else {
         setTimeout(() => {

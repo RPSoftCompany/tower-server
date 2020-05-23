@@ -109,8 +109,10 @@ module.exports = async (app) => {
     });
 
     if (wasBooted === null) {
-        v1.create([{
+        await v1.create([{
             booted: true,
         }]);
     }
+
+    app.booted = true;
 };

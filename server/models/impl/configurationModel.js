@@ -290,16 +290,31 @@ module.exports = class ConfigurationModel {
         const member = this.app.get('MemberInstance');
         const roles = await member.getUserRoles(userId);
 
-        const specificPermissions = member.rolesCache.find( (role) => {
-            return role.name === `configurationModel.${baseName}.${configModelName}.modify`;
+        const hasReadWrite = member.rolesCache.filter( (role) => {
+            return role.name === `configurationModel.view` || role.name === `configurationModel.modify`;
         });
 
-        const hasWritePermissions = roles.includes(`baseConfigurations.${baseName}.view`);
-
-        if (!hasWritePermissions) {
+        if (hasReadWrite.length !== 2) {
             this.log('debug', 'validateWritePermissions', 'FINISHED');
             return false;
         }
+
+        const thisBaseWritePerm = member.rolesCache.find( (role) => {
+            return role.name === `baseConfigurations.${baseName}.view`;
+        });
+
+        if (thisBaseWritePerm !== undefined) {
+            const hasWritePermissions = roles.includes(`baseConfigurations.${baseName}.view`);
+
+            if (!hasWritePermissions) {
+                this.log('debug', 'validateWritePermissions', 'FINISHED');
+                return false;
+            }
+        }
+
+        const specificPermissions = member.rolesCache.find( (role) => {
+            return role.name === `configurationModel.${baseName}.${configModelName}.modify`;
+        });
 
         if (specificPermissions === undefined) {
             this.log('debug', 'validateWritePermissions', 'FINISHED');

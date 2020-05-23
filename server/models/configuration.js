@@ -23,7 +23,7 @@ const ConfigModel = require('./impl/configuration.js');
 let configModel = null;
 
 const initiate = (main) => {
-    if (main.app !== undefined) {
+    if (main.app !== undefined && main.app.booted) {
         if (main.app.dataSources['mongoDB'] === undefined) {
             setTimeout( () => {
                 initiate(main);

@@ -21,7 +21,7 @@ const ConnectionModel = require('./impl/connection');
 let connection = null;
 
 const initiate = (main) => {
-    if (main.app !== undefined) {
+    if (main.app !== undefined && main.app.booted) {
         connection = new ConnectionModel(main.app);
     } else {
         setTimeout( () => {

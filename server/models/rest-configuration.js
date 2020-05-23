@@ -21,7 +21,7 @@ const ConfigModel = require('./impl/restConfiguration.js');
 let configModel = null;
 
 const initiate = (main) => {
-    if (main.app !== undefined) {
+    if (main.app !== undefined && main.app.booted) {
         configModel = new ConfigModel(main.app);
     } else {
         setTimeout( () => {

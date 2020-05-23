@@ -21,7 +21,7 @@ const PromotionModel = require('./impl/promotion.js');
 let promModel = null;
 
 const initiate = (main) => {
-    if (main.app !== undefined) {
+    if (main.app !== undefined && main.app.booted) {
         promModel = new PromotionModel(main.app);
     } else {
         setTimeout( () => {
