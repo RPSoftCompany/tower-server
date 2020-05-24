@@ -382,7 +382,7 @@ module.exports = class Configuration {
     async promoteConfiguration(id, options) {
         this.log('debug', 'promoteConfiguration', 'STARTED');
 
-        const toPromote = await this.findWithPermissions({
+        let toPromote = await this.findWithPermissions({
             where: {
                 id: id,
                 draft: false,
@@ -393,6 +393,15 @@ module.exports = class Configuration {
             this.log('debug', 'promoteConfiguration', 'FINISHED');
             throw new HttpErrors.BadRequest('Invalid configuration id');
         }
+
+        const Configuration = this.app.models.configuration;
+
+        toPromote = await Configuration.find({
+            where: {
+                id: id,
+                draft: false,
+            },
+        });
 
         toPromote[0].promoted = true;
         await toPromote[0].save();
