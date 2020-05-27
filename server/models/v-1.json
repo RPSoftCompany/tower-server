@@ -32,12 +32,6 @@
     {
       "accessType": "*",
       "principalType": "ROLE",
-      "principalId": "envNoPermissionsSolver",
-      "permission": "ALLOW"
-    },
-    {
-      "accessType": "*",
-      "principalType": "ROLE",
       "principalId": "$everyone",
       "permission": "DENY"
     },
