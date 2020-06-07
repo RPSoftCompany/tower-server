@@ -66,7 +66,6 @@ module.exports = class BaseConfiguration {
         }
 
         const baseConfiguration = this.app.models.baseConfiguration;
-        // const role = this.app.models.Role;
         const all = await baseConfiguration.count();
 
         baseConfig.sequenceNumber = all;
@@ -132,6 +131,14 @@ module.exports = class BaseConfiguration {
             },
         });
 
+        await role.deleteAll({
+            name: {
+                like: `${base.name}\.*`,
+            },
+        });
+
+        await base.destroy();
+
         const all = await baseConfiguration.find({
             order: 'sequenceNumber ASC',
         });
@@ -141,14 +148,6 @@ module.exports = class BaseConfiguration {
             base.sequenceNumber = i;
             await base.save();
         };
-
-        await role.deleteAll({
-            name: {
-                like: `${base.name}\.*`,
-            },
-        });
-
-        await base.destroy();
 
         this.log('debug', 'deleteBaseConfiguration', 'FINISHED');
     };
