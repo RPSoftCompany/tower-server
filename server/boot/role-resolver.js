@@ -52,6 +52,7 @@ module.exports = function(app) {
         const roles = await member.getUserRoles(context.accessToken.userId);
 
         if (roles.includes('admin')) {
+            logger.log('debug', `groupSolver => FINISHED`);
             return true;
         }
 

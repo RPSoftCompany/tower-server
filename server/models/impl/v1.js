@@ -17,6 +17,7 @@
 const HttpErrors = require('http-errors');
 const axios = require('axios');
 const ConfigurationClass = require('./configuration.js');
+const ConstantVariableClass = require('./constantVariable');
 
 module.exports = class V1 {
     /**
@@ -224,53 +225,52 @@ module.exports = class V1 {
      * @param {[object]} variables variables
      * @param {object} fullModel full model
      * @param {object} configurationObject configuration object from query
+     * @param {object} options request options
      *
      * @return {[object]} updated configuration
      */
-    async updateVariablesWithDefaults(variables, fullModel, configurationObject) {
+    async updateVariablesWithDefaults(variables, fullModel, configurationObject, options) {
         this.log('debug', 'updateVariablesWithDefaults', 'STARTED');
 
-        const Model = this.app.models.configurationModel;
-
-        const query = [];
-        fullModel.forEach((model) => {
-            query.push({
-                name: configurationObject[model.name],
-            });
+        const filter = {};
+        fullModel.forEach( (el) => {
+            filter[el.name] = configurationObject[el.name];
         });
 
-        const find = await Model.find({
-            where: {
-                or: query,
-            },
-        });
+        const ConfigurationModel = new ConstantVariableClass(this.app);
 
-        const newVariables = new Map();
+        const latest = await ConfigurationModel.findLatest(filter, options);
 
-        for (const base of fullModel) {
-            const currentModel = find.find((el) => {
-                return el.base === base.name;
-            });
+        const newVariables = [...variables];
 
-            for (const variable of variables) {
-                const defaultVariable = currentModel.defaultValues.find((el) => {
-                    return variable.name === el.name;
-                });
+        latest.forEach( (el) => {
+            let found = false;
 
-                if (defaultVariable !== undefined) {
-                    variable.value = defaultVariable.value;
-                    newVariables.set(variable.name, variable);
-                } else {
-                    if (!newVariables.has(variable.name)) {
-                        newVariables.set(variable.name, variable);
+            for (let i = 0; i < newVariables.length; i++) {
+                const temp = newVariables[i];
+                if (temp.name === el.name) {
+                    found = true;
+
+                    if (el.forced) {
+                        temp.type = el.type;
+                        temp.value = el.value;
+                        i = newVariables.length;
                     }
                 }
             }
-        }
+
+            if (!found && el.addIfAbsent) {
+                newVariables.push({
+                    name: el.name,
+                    type: el.type,
+                    value: el.value,
+                });
+            }
+        });
 
         this.log('debug', 'updateVariablesWithDefaults', 'FINISHED');
 
-        return Array.from(newVariables.values());
+        return Array.from(newVariables);
     }
 
     /**
@@ -363,7 +363,7 @@ module.exports = class V1 {
                 }
             });
 
-            retValue.variables = await this.updateVariablesWithDefaults(retValue.variables, models, current);
+            retValue.variables = await this.updateVariablesWithDefaults(retValue.variables, models, current, options);
 
             for (let i = 0; i < retValue.variables.length; i++) {
                 const item = retValue.variables[i];

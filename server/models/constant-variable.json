@@ -1,44 +1,25 @@
 {
-  "name": "configurationModel",
+  "name": "constantVariable",
   "base": "PersistedModel",
+  "strict": false,
   "idInjection": true,
   "options": {
     "validateUpsert": true
   },
-  "hidden": [
-    "deleted"
-  ],
   "properties": {
-    "name": {
+    "effectiveDate": {
+      "type": "date",
+      "required": true,
+      "default": "$now"
+    },
+    "createdBy": {
       "type": "string",
       "required": true
     },
-    "rules": {
+    "variables": {
       "type": [
-        "rule"
+        "variable"
       ]
-    },
-    "restrictions": {
-      "type": [
-        "string"
-      ]
-    },
-    "defaultValues": {
-      "type": [
-        "constantVariable"
-      ]
-    },
-    "base": {
-      "type": "string",
-      "required": true
-    },
-    "options": {
-      "type": "modelOptions",
-      "required": true
-    },
-    "deleted": {
-      "type": "boolean",
-      "default": false
     }
   },
   "validations": [],

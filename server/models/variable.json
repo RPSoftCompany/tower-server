@@ -20,6 +20,16 @@
     "type": {
       "type": "string",
       "required": true
+    },
+    "forced": {
+      "type": "boolean",
+      "required": true,
+      "default": true
+    },
+    "addIfAbsent": {
+      "type": "boolean",
+      "required": true,
+      "default": true
     }
   },
   "validations": [],

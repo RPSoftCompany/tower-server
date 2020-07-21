@@ -1,6 +1,6 @@
 {
   "name": "tower",
-  "version": "1.5.1",
+  "version": "1.6.0",
   "bin": "server/server.js",
   "main": "server/server.js",
   "engines": {
@@ -85,10 +85,6 @@
     "nyc": "^15.0.0",
     "should": "^13.2.3"
   },
-  "repository": {
-    "type": "",
-    "url": ""
-  },
-  "license": "UNLICENSED",
+  "license": "GPL",
   "description": "tower"
 }

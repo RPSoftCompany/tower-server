@@ -6,7 +6,6 @@ const url = 'http://localhost:3000/api';
 let id = null;
 let baseId = null;
 let ruleId = null;
-let variableId = null;
 let token = null;
 describe('Configuration Model', () => {
     before(async () => {
@@ -48,13 +47,6 @@ describe('Configuration Model', () => {
                     'restrictions': [
                         'string',
                     ],
-                    'defaultValues': [
-                        {
-                            '_id': 'string',
-                            'name': 'string',
-                            'variable': 'string',
-                        },
-                    ],
                     'base': 'string',
                     'options': {
                         'hasRestrictions': false,
@@ -94,13 +86,6 @@ describe('Configuration Model', () => {
                     'restrictions': [
                         'string',
                     ],
-                    'defaultValues': [
-                        {
-                            '_id': 'string',
-                            'name': 'string',
-                            'variable': 'string',
-                        },
-                    ],
                     'base': 'string',
                     'options': {
                         'hasRestrictions': false,
@@ -129,13 +114,6 @@ describe('Configuration Model', () => {
                     'restrictions': [
                         'string',
                     ],
-                    'defaultValues': [
-                        {
-                            '_id': 'string',
-                            'name': 'string',
-                            'variable': 'string',
-                        },
-                    ],
                     'base': 'string',
                     'options': {
                         'hasRestrictions': false,
@@ -163,9 +141,10 @@ describe('Configuration Model', () => {
 
         describe('POST/{id}/restriction', () => {
             it(`should return 204`, async () => {
-                const configuration = await axios.post(`${url}/configurationModels/${id}/restriction?restriction=asdf`, undefined, {
-                    headers: {Authorization: token},
-                });
+                const configuration = await axios.post(`${url}/configurationModels/${id}/restriction?restriction=asdf`,
+                    undefined, {
+                        headers: {Authorization: token},
+                    });
 
                 should(configuration.status).equal(204);
             });
@@ -222,45 +201,6 @@ describe('Configuration Model', () => {
             });
         });
 
-        describe('POST/{id}/variable', () => {
-            it(`should return 201`, async () => {
-                const configuration = await axios.post(`${url}/configurationModels/${id}/variable`, {
-                    'name': 'string123',
-                    'variable': 'string',
-                }, {
-                    headers: {Authorization: token},
-                });
-
-                variableId = configuration.data._id;
-
-                should(configuration.status).equal(201);
-            });
-        });
-
-        describe('PATCH/{id}/variable', () => {
-            it(`should return 200`, async () => {
-                const configuration = await axios.patch(`${url}/configurationModels/${id}/variable`, {
-                    '_id': variableId,
-                    'name': 'string123',
-                    'variable': 'string',
-                }, {
-                    headers: {Authorization: token},
-                });
-
-                should(configuration.status).equal(200);
-            });
-        });
-
-        describe('DELETE/{id}/variable', () => {
-            it(`should return 204`, async () => {
-                const configuration = await axios.delete(`${url}/configurationModels/${id}/variable?variableId=${variableId}`, {
-                    headers: {Authorization: token},
-                });
-
-                should(configuration.status).equal(204);
-            });
-        });
-
         describe('DELETE/{id}', () => {
             it(`should return 204`, async () => {
                 const configuration = await axios.delete(`${url}/configurationModels/${id}`, {
@@ -287,13 +227,6 @@ describe('Configuration Model', () => {
                         ],
                         'restrictions': [
                             'string',
-                        ],
-                        'defaultValues': [
-                            {
-                                '_id': 'string',
-                                'name': 'string',
-                                'variable': 'string',
-                            },
                         ],
                         'base': 'string',
                         'options': {
@@ -332,13 +265,6 @@ describe('Configuration Model', () => {
                         'restrictions': [
                             'string',
                         ],
-                        'defaultValues': [
-                            {
-                                '_id': 'string',
-                                'name': 'string',
-                                'variable': 'string',
-                            },
-                        ],
                         'base': 'string',
                         'options': {
                             'hasRestrictions': false,
@@ -366,13 +292,6 @@ describe('Configuration Model', () => {
                         ],
                         'restrictions': [
                             'string',
-                        ],
-                        'defaultValues': [
-                            {
-                                '_id': 'string',
-                                'name': 'string',
-                                'variable': 'string',
-                            },
                         ],
                         'base': 'string',
                         'options': {
@@ -451,43 +370,6 @@ describe('Configuration Model', () => {
             it(`should return 401`, async () => {
                 try {
                     await axios.delete(`${url}/configurationModels/${id}/rule?ruleId=ASDF`);
-                } catch (e) {
-                    should(e.response.status).equal(401);
-                }
-            });
-        });
-
-        describe('POST/{id}/variable', () => {
-            it(`should return 401`, async () => {
-                try {
-                    await axios.post(`${url}/configurationModels/${id}/variable`, {
-                        'name': 'string123',
-                        'variable': 'string',
-                    });
-                } catch (e) {
-                    should(e.response.status).equal(401);
-                }
-            });
-        });
-
-        describe('PATCH/{id}/variable', () => {
-            it(`should return 401`, async () => {
-                try {
-                    await axios.patch(`${url}/configurationModels/${id}/variable`, {
-                        '_id': variableId,
-                        'name': 'string123',
-                        'variable': 'string',
-                    });
-                } catch (e) {
-                    should(e.response.status).equal(401);
-                }
-            });
-        });
-
-        describe('DELETE/{id}/variable', () => {
-            it(`should return 401`, async () => {
-                try {
-                    await axios.delete(`${url}/configurationModels/${id}/variable?variableId=${variableId}`);
                 } catch (e) {
                     should(e.response.status).equal(401);
                 }

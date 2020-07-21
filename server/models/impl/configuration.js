@@ -16,6 +16,7 @@
 
 const HttpErrors = require('http-errors');
 const ConfigurationModelClass = require('./configurationModel.js');
+const ConstantVariableClass = require('./constantVariable.js');
 const crypto = require('crypto');
 
 const fs = require('file-system');
@@ -497,9 +498,11 @@ module.exports = class Configuration {
             throw new HttpErrors.BadRequest('Invalid date');
         }
 
-        const BaseConfiguration = this.app.models.baseConfiguration;
-        const ConfigurationModel = this.app.get('ConfModelInstance');
-        const DefaultVariableHistory = this.app.models.defaultVariableHistory;
+        // const BaseConfiguration = this.app.models.baseConfiguration;
+        // const ConfigurationModel = this.app.get('ConfModelInstance');
+        // const DefaultVariableHistory = this.app.models.defaultVariableHistory;
+
+        const constVariable = new ConstantVariableClass(this.app);
 
         filter.effectiveDate = {lt: givenDate};
         filter.deleted = false;
@@ -518,45 +521,66 @@ module.exports = class Configuration {
             return {};
         }
 
-        const allBases = await BaseConfiguration.find({
-            order: 'sequenceNumber ASC',
-            fields: {name: true},
-        });
+        const variables = await constVariable.findForDate(filter, date, options);
 
-        const defaultMap = new Map();
+        // const allBases = await BaseConfiguration.find({
+        //     order: 'sequenceNumber ASC',
+        //     fields: {name: true},
+        // });
 
-        for (const base of allBases) {
-            const model = await ConfigurationModel.findOneWithPermissions({
-                where: {
-                    name: candConfig[base.name],
-                },
-            }, options);
+        // const defaultMap = new Map();
 
-            const history = await DefaultVariableHistory.findOne({
-                where: {
-                    model_id: {regexp: new RegExp(model.id)},
-                    effectiveDate: {lt: givenDate},
-                },
-                order: 'effectiveDate DESC',
-            });
+        // for (const base of allBases) {
+        //     const model = await ConfigurationModel.findOneWithPermissions({
+        //         where: {
+        //             name: candConfig[base.name],
+        //         },
+        //     }, options);
 
-            if (history !== null) {
-                history.variables.forEach((variable) => {
-                    defaultMap.set(variable.name, variable.value);
-                });
-            }
+        //     const history = await DefaultVariableHistory.findOne({
+        //         where: {
+        //             model_id: {regexp: new RegExp(model.id)},
+        //             effectiveDate: {lt: givenDate},
+        //         },
+        //         order: 'effectiveDate DESC',
+        //     });
 
-            model.defaultValues.forEach((variable) => {
-                const tempDate = new Date(variable.creationDate);
-                if (tempDate < givenDate) {
-                    defaultMap.set(variable.name, variable.value);
-                }
-            });
-        }
+        //     if (history !== null) {
+        //         history.variables.forEach((variable) => {
+        //             defaultMap.set(variable.name, variable.value);
+        //         });
+        //     }
+
+        //     model.defaultValues.forEach((variable) => {
+        //         const tempDate = new Date(variable.creationDate);
+        //         if (tempDate < givenDate) {
+        //             defaultMap.set(variable.name, variable.value);
+        //         }
+        //     });
+        // }
 
         candConfig.variables.map((variable) => {
-            if (defaultMap.has(variable.name)) {
-                variable.value = defaultMap.get(variable.name);
+            const constVariable = variables.find( (el) => {
+                return el.name === variable.name;
+            });
+
+            if (constVariable !== undefined) {
+                if (constVariable.forced) {
+                    variable.type = constVariable.type;
+                    variable.value = constVariable.value;
+                }
+            }
+        });
+
+        variables.forEach( (variable) => {
+            if (variable.addIfAbsent) {
+                const found = candConfig.variables.find( (el) => {
+                    return el.name === variable.name;
+                });
+
+                if (found === undefined) {
+                    candConfig.variables.push(variable);
+                }
             }
         });
 

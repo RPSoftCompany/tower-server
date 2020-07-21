@@ -34,7 +34,8 @@ module.exports = function(Restconfiguration) {
     initiate(Restconfiguration);
 
     Restconfiguration.validatesUniquenessOf('url', {message: 'URL is not unique'});
-    Restconfiguration.validatesInclusionOf('returnType', {message: 'returnType can be "json", "xml" or "plain text"', in: ['json', 'xml', 'plain text']});
+    Restconfiguration.validatesInclusionOf('returnType',
+        {message: 'returnType can be "json", "xml" or "plain text"', in: ['json', 'xml', 'plain text']});
 
     Restconfiguration.disableRemoteMethodByName('create'); // POST
 

@@ -134,22 +134,6 @@ module.exports = function(Configurationmodel) {
         return await configModel.modifyRule(modelId, rule, options);
     };
 
-    Configurationmodel.addDefaultVariable = async (modelId, variable, options) => {
-        return await configModel.addDefaultVariable(modelId, variable, options);
-    };
-
-    Configurationmodel.removeVariable = async (modelId, variableId, options) => {
-        return await configModel.removeVariable(modelId, variableId, options);
-    };
-
-    Configurationmodel.modifyVariable = async (modelId, variable, options) => {
-        if (options.accessToken === undefined || options.accessToken === null
-            || options.accessToken.userId === undefined || options.accessToken.userId === null) {
-            throw new HttpErrors.Unauthorized('Unauthorized');
-        }
-        return await configModel.modifyVariable(modelId, variable, options);
-    };
-
     Configurationmodel.modifyModelOptions = async (modelId, modelOptions, options) => {
         return await configModel.modifyModelOptions(modelId, modelOptions, options);
     };
@@ -248,41 +232,6 @@ module.exports = function(Configurationmodel) {
         ],
         description: 'Updates validation rule from given configuration model',
         returns: {arg: 'rule', type: 'rule', root: true},
-    });
-
-    Configurationmodel.remoteMethod('addDefaultVariable', {
-        http: {path: '/:id/variable', status: 201, verb: 'POST'},
-        accepts: [
-            {arg: 'id', type: 'string', required: true, http: {source: 'path'}},
-            {arg: 'variable', type: 'defaultVariable', required: true,
-                http: {source: 'body'}},
-            {arg: 'options', type: 'object', http: 'optionsFromRequest'},
-        ],
-        description: 'Creates default variable for given configuration model',
-        returns: {arg: 'variable', type: 'defaultVariable', root: true},
-    });
-
-    Configurationmodel.remoteMethod('removeVariable', {
-        http: {path: '/:id/variable', status: 200, verb: 'DELETE'},
-        accepts: [
-            {arg: 'id', type: 'string', required: true, http: {source: 'path'}},
-            {arg: 'variableId', type: 'string', required: true,
-                http: {source: 'query'}},
-            {arg: 'options', type: 'object', http: 'optionsFromRequest'},
-        ],
-        description: 'Removes default variable from given configuration model',
-    });
-
-    Configurationmodel.remoteMethod('modifyVariable', {
-        http: {path: '/:id/variable', status: 200, verb: 'PATCH'},
-        accepts: [
-            {arg: 'id', type: 'string', required: true, http: {source: 'path'}},
-            {arg: 'variable', type: 'defaultVariable', required: true,
-                http: {source: 'body'}},
-            {arg: 'options', type: 'object', http: 'optionsFromRequest'},
-        ],
-        returns: {arg: 'variable', type: 'defaultVariable', root: true},
-        description: 'Updates default variable from given configuration model',
     });
 
     Configurationmodel.remoteMethod('modifyModelOptions', {
