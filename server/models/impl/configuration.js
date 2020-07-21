@@ -498,10 +498,6 @@ module.exports = class Configuration {
             throw new HttpErrors.BadRequest('Invalid date');
         }
 
-        // const BaseConfiguration = this.app.models.baseConfiguration;
-        // const ConfigurationModel = this.app.get('ConfModelInstance');
-        // const DefaultVariableHistory = this.app.models.defaultVariableHistory;
-
         const constVariable = new ConstantVariableClass(this.app);
 
         filter.effectiveDate = {lt: givenDate};
@@ -522,42 +518,6 @@ module.exports = class Configuration {
         }
 
         const variables = await constVariable.findForDate(filter, date, options);
-
-        // const allBases = await BaseConfiguration.find({
-        //     order: 'sequenceNumber ASC',
-        //     fields: {name: true},
-        // });
-
-        // const defaultMap = new Map();
-
-        // for (const base of allBases) {
-        //     const model = await ConfigurationModel.findOneWithPermissions({
-        //         where: {
-        //             name: candConfig[base.name],
-        //         },
-        //     }, options);
-
-        //     const history = await DefaultVariableHistory.findOne({
-        //         where: {
-        //             model_id: {regexp: new RegExp(model.id)},
-        //             effectiveDate: {lt: givenDate},
-        //         },
-        //         order: 'effectiveDate DESC',
-        //     });
-
-        //     if (history !== null) {
-        //         history.variables.forEach((variable) => {
-        //             defaultMap.set(variable.name, variable.value);
-        //         });
-        //     }
-
-        //     model.defaultValues.forEach((variable) => {
-        //         const tempDate = new Date(variable.creationDate);
-        //         if (tempDate < givenDate) {
-        //             defaultMap.set(variable.name, variable.value);
-        //         }
-        //     });
-        // }
 
         candConfig.variables.map((variable) => {
             const constVariable = variables.find( (el) => {
