@@ -68,6 +68,8 @@ module.exports = function(app) {
         if (model === 'v1') {
             model = 'configuration';
             access = 'view';
+        } else if (model === 'constantVariable') {
+            model = 'configurationModel';
         }
 
         let hasPermissions = false;
