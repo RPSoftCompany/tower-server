@@ -17,7 +17,6 @@
 'use strict';
 
 const ConfigModel = require('./impl/configurationModel.js');
-const HttpErrors = require('http-errors');
 
 let configModel = null;
 
@@ -64,15 +63,6 @@ const hook = (main) => {
 
         main.app.hookSingleton.createHook('beforeModifyRule', 'ConfigurationModel', 'description');
         main.app.hookSingleton.createHook('afterModifyRule', 'ConfigurationModel', 'description');
-
-        main.app.hookSingleton.createHook('beforeAddVariable', 'ConfigurationModel', 'description');
-        main.app.hookSingleton.createHook('afterAddVariable', 'ConfigurationModel', 'description');
-
-        main.app.hookSingleton.createHook('beforeRemoveVariable', 'ConfigurationModel', 'description');
-        main.app.hookSingleton.createHook('afterRemoveVariable', 'ConfigurationModel', 'description');
-
-        main.app.hookSingleton.createHook('beforeModifyVariable', 'ConfigurationModel', 'description');
-        main.app.hookSingleton.createHook('afterModifyVariable', 'ConfigurationModel', 'description');
     } else {
         setTimeout( () => {
             hook(main);

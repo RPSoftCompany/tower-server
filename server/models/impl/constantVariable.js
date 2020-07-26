@@ -117,6 +117,8 @@ module.exports = class BaseConfiguration {
 
         await newVariable.save();
 
+        this.app.hookSingleton.executeHook('variableChanged', 'ConstantVariable', newVariable);
+
         this.log('debug', 'createConstantVariable', 'FINISHED');
     }
 

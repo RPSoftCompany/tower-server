@@ -24,14 +24,7 @@ const initiate = (main) => {
     if (main.app !== undefined && main.app.booted) {
         constantVariable = new ConstantVariableModel(main.app);
 
-        main.app.hookSingleton.createHook('beforeAddVariable', 'ConstantVariable', 'description');
-        main.app.hookSingleton.createHook('afterAddVariable', 'ConstantVariable', 'description');
-
-        main.app.hookSingleton.createHook('beforeRemoveVariable', 'ConstantVariable', 'description');
-        main.app.hookSingleton.createHook('afterRemoveVariable', 'ConstantVariable', 'description');
-
-        main.app.hookSingleton.createHook('beforeModifyVariable', 'ConstantVariable', 'description');
-        main.app.hookSingleton.createHook('afterModifyVariable', 'ConstantVariable', 'description');
+        main.app.hookSingleton.createHook('variableChanged', 'ConstantVariable', 'description');
     } else {
         setTimeout( () => {
             initiate(main);
