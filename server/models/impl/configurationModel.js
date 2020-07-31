@@ -29,6 +29,8 @@ module.exports = class ConfigurationModel {
         this.app = app;
 
         this.confModelCache = [];
+
+        this.cacheEnabled = true;
     }
 
     /**
@@ -62,11 +64,28 @@ module.exports = class ConfigurationModel {
         this.confModelCache = await ConfigurationModel.find();
 
         const changeStream = this.app.dataSources['mongoDB'].connector.collection('configurationModel').watch();
+        changeStream.on('error', (err) => {
+            if (err.code === 40573) {
+                this.cacheEnabled = false;
+            }
+        });
         changeStream.on('change', async () => {
             this.confModelCache = await ConfigurationModel.find();
         });
 
         this.app.set('ConfModelInstance', this);
+    }
+
+    /**
+     * get model from cache or DB if not dataset
+     *
+     */
+    async getConfigurationModelFromCache() {
+        if (this.cacheEnabled) {
+            return this.confModelCache;
+        } else {
+            return await this.app.models.configurationModel.find();
+        }
     }
 
     /**
@@ -187,7 +206,9 @@ module.exports = class ConfigurationModel {
 
         const baseConfiguration = this.app.models.baseConfiguration;
 
-        const exists = this.confModelCache.find( (el) => {
+        const confModelCache = await this.getConfigurationModelFromCache();
+
+        const exists = confModelCache.find((el) => {
             return el.name === model.name;
         });
 
@@ -283,7 +304,9 @@ module.exports = class ConfigurationModel {
         const member = this.app.get('MemberInstance');
         const roles = await member.getUserRoles(userId);
 
-        const hasReadWrite = member.rolesCache.filter( (role) => {
+        const rolesCache = await member.getRolesFromCache();
+
+        const hasReadWrite = rolesCache.filter((role) => {
             return role.name === `configurationModel.view` || role.name === `configurationModel.modify`;
         });
 
@@ -292,7 +315,7 @@ module.exports = class ConfigurationModel {
             return false;
         }
 
-        const thisBaseWritePerm = member.rolesCache.find( (role) => {
+        const thisBaseWritePerm = rolesCache.find((role) => {
             return role.name === `baseConfigurations.${baseName}.view`;
         });
 
@@ -305,7 +328,7 @@ module.exports = class ConfigurationModel {
             }
         }
 
-        const specificPermissions = member.rolesCache.find( (role) => {
+        const specificPermissions = rolesCache.find((role) => {
             return role.name === `configurationModel.${baseName}.${configModelName}.modify`;
         });
 

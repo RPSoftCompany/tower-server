@@ -33,6 +33,8 @@ module.exports = class Member {
 
         this.rolesCache = [];
         this.groupCache = [];
+
+        this.cacheEnabled = true;
     }
 
     /**
@@ -67,16 +69,50 @@ module.exports = class Member {
         this.rolesCache = await Role.find();
 
         const changeStream = this.app.dataSources['mongoDB'].connector.collection('Role').watch();
+        changeStream.on('error', (err) => {
+            if (err.code === 40573) {
+                this.cacheEnabled = false;
+            }
+        });
         changeStream.on('change', async () => {
             this.rolesCache = await Role.find();
         });
 
         const groupChangeStream = this.app.dataSources['mongoDB'].connector.collection('group').watch();
+        groupChangeStream.on('error', (err) => {
+            if (err.code === 40573) {
+                this.cacheEnabled = false;
+            }
+        });
         groupChangeStream.on('change', async () => {
             this.groupCache = await Group.find();
         });
 
         this.app.set('MemberInstance', this);
+    }
+
+    /**
+     * get roles from cache or DB if not dataset
+     *
+     */
+    async getRolesFromCache() {
+        if (this.cacheEnabled) {
+            return this.rolesCache;
+        } else {
+            return await this.app.models.Role.find();
+        }
+    }
+
+    /**
+     * get groups from cache or DB if not dataset
+     *
+     */
+    async getGroupsFromCache() {
+        if (this.cacheEnabled) {
+            return this.groupCache;
+        } else {
+            return await this.app.models.group.find();
+        }
     }
 
     /**
@@ -406,7 +442,9 @@ module.exports = class Member {
             },
         });
 
-        const groups = this.groupCache.filter( (el) => {
+        const groupCache = await this.getGroupsFromCache();
+
+        const groups = groupCache.filter((el) => {
             return user.groups.includes(el.name);
         });
 
@@ -420,7 +458,8 @@ module.exports = class Member {
         });
 
         if (user.username === 'admin' || roles.has('admin')) {
-            this.rolesCache.forEach( (role) => {
+            const rolesCache = await this.getRolesFromCache();
+            rolesCache.forEach((role) => {
                 roles.add(role.name);
             });
         }
