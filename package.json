@@ -67,7 +67,7 @@
     "helmet": "^3.21.1",
     "ldapauth-fork": "^4.2.0",
     "ldapjs": "^1.0.2",
-    "loopback": "^3.26.0",
+    "loopback": "^3.27.0",
     "loopback-boot": "^3.3.1",
     "loopback-component-explorer": "^6.5.0",
     "loopback-component-passport": "^3.11.0",

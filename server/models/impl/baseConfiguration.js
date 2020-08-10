@@ -27,6 +27,12 @@ module.exports = class BaseConfiguration {
         this.logger = null;
 
         this.app = app;
+
+        this.baseConfigurationCache = [];
+
+        this.cacheEnabled = true;
+
+        this.createCache();
     }
 
     /**
@@ -51,6 +57,40 @@ module.exports = class BaseConfiguration {
     }
 
     /**
+     * creates local cache
+     *
+     */
+    async createCache() {
+        const BaseConfiguration = this.app.models.baseConfiguration;
+
+        this.baseConfigurationCache = await BaseConfiguration.find();
+
+        const changeStream = this.app.dataSources['mongoDB'].connector.collection('baseConfiguration').watch();
+        changeStream.on('error', (err) => {
+            if (err.code === 40573) {
+                this.cacheEnabled = false;
+            }
+        });
+        changeStream.on('change', async () => {
+            this.baseConfigurationCache = await BaseConfiguration.find();
+        });
+
+        this.app.set('BaseConfigurationInstance', this);
+    }
+
+    /**
+     * get base model from cache or DB if not dataset
+     *
+     */
+    async getConfigurationModelFromCache() {
+        if (this.cacheEnabled === true) {
+            return this.baseConfigurationCache;
+        } else {
+            return await this.app.models.baseConfiguration.find();
+        }
+    }
+
+    /**
      * create base Configuration
      *
      * @param {baseConfiguration} baseConfig new base configuration
@@ -65,10 +105,9 @@ module.exports = class BaseConfiguration {
             throw new HttpErrors.BadRequest(`Configuration model can't be named 'version'`);
         }
 
-        const baseConfiguration = this.app.models.baseConfiguration;
-        const all = await baseConfiguration.count();
+        const all = await this.getConfigurationModelFromCache();
 
-        baseConfig.sequenceNumber = all;
+        baseConfig.sequenceNumber = all.length;
 
         await baseConfig.save();
 
@@ -85,9 +124,10 @@ module.exports = class BaseConfiguration {
     async changeSequence(baseConfig) {
         this.log('debug', 'changeSequence', 'STARTED');
 
-        const baseConfiguration = this.app.models.baseConfiguration;
-        const all = await baseConfiguration.find({
-            order: 'sequenceNumber ASC',
+        const baseCache = await this.getConfigurationModelFromCache();
+
+        const all = baseCache.sort((a, b) => {
+            return a.sequenceNumber > b.sequenceNumber;
         });
 
         const tempArray = [];

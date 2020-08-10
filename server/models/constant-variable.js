@@ -21,7 +21,9 @@ const ConstantVariableModel = require('./impl/constantVariable');
 let constantVariable = null;
 
 const initiate = (main) => {
-    if (main.app !== undefined && main.app.booted) {
+    if (main.app !== undefined && main.app.booted
+            && main.app.dataSources['mongoDB'] !== undefined
+            && main.app.dataSources['mongoDB'].connected) {
         constantVariable = new ConstantVariableModel(main.app);
 
         main.app.hookSingleton.createHook('variableChanged', 'ConstantVariable', 'description');

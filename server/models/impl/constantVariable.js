@@ -131,7 +131,7 @@ module.exports = class BaseConfiguration {
      * @return {constantVariable} created model
      */
     async findWithPermissions(filter, options) {
-        this.log('debug', 'createConstantVariable', 'STARTED');
+        this.log('debug', 'findWithPermissions', 'STARTED');
 
         const ConstantVariable = this.app.models.constantVariable;
         const baseConfiguration = this.app.models.baseConfiguration;
@@ -172,7 +172,7 @@ module.exports = class BaseConfiguration {
             }
         }
 
-        this.log('debug', 'createConstantVariable', 'FINISHED');
+        this.log('debug', 'findWithPermissions', 'FINISHED');
 
         return out;
     }

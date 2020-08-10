@@ -207,11 +207,11 @@ module.exports = class Configuration {
         this.log('debug', 'findWithPermissions', 'STARTED');
 
         const configuration = this.app.models.configuration;
-        const baseConfiguration = this.app.models.baseConfiguration;
+        // const baseConfiguration = this.app.models.baseConfiguration;
         const configModel = new ConfigurationModelClass(this.app);
 
         const configAll = await configuration.find(filter);
-        const allBases = await baseConfiguration.find();
+        const allBases = await this.app.get('BaseConfigurationInstance').getConfigurationModelFromCache();
 
         await this.createCrypt();
 
@@ -275,12 +275,18 @@ module.exports = class Configuration {
 
         const userId = options.accessToken.userId;
 
-        const baseConfiguration = this.app.models.baseConfiguration;
+        // const baseConfiguration = this.app.models.baseConfiguration;
         const Configuration = this.app.models.configuration;
         const configModel = new ConfigurationModelClass(this.app);
 
-        const allBases = await baseConfiguration.find({
-            order: 'sequenceNumber ASC',
+        const baseCache = await this.app.get('BaseConfigurationInstance').getConfigurationModelFromCache();
+
+        // const allBases = await baseConfiguration.find({
+        //     order: 'sequenceNumber ASC',
+        // });
+
+        const allBases = baseCache.sort((a, b) => {
+            return a.sequenceNumber > b.sequenceNumber;
         });
 
         await this.createCrypt();
@@ -423,9 +429,10 @@ module.exports = class Configuration {
         this.log('debug', 'findPromotionCandidates', 'STARTED');
 
         const promotion = this.app.models.promotion;
-        const baseConfiguration = this.app.models.baseConfiguration;
+        // const baseConfiguration = this.app.models.baseConfiguration;
 
-        const bases = await baseConfiguration.find();
+        // const bases = await baseConfiguration.find();
+        const bases = await this.app.get('BaseConfigurationInstance').getConfigurationModelFromCache();
 
         const modelMap = new Map();
         bases.forEach((base) => {
