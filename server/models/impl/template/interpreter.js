@@ -404,7 +404,7 @@ class If extends InterpreterCommon {
 
                 if (addLine && !inElse) {
                     line = this.replaceVariables(line);
-                    response.text += line;
+                    response.text += line + '\n';
                 }
 
                 i++;
