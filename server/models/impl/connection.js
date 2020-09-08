@@ -140,7 +140,7 @@ module.exports = class Connection {
 
             if (tempConn.system === 'LDAP') {
                 tempConn.url = connection.url !== undefined ? connection.url : tempConn.url;
-                tempConn.bindDN = connection.url !== undefined ? connection.url : tempConn.url;
+                tempConn.bindDN = connection.bindDN !== undefined ? connection.bindDN : tempConn.bindDN;
                 tempConn.bindCredentials = connection.bindCredentials !== undefined ?
                     connection.bindCredentials : tempConn.bindCredentials;
                 tempConn.searchBase = connection.searchBase !== undefined ?
@@ -175,7 +175,7 @@ module.exports = class Connection {
 
             if (tempConn.system === 'LDAP') {
                 tempConn.url = connection.url !== undefined ? connection.url : tempConn.url;
-                tempConn.bindDN = connection.url !== undefined ? connection.url : tempConn.url;
+                tempConn.bindDN = connection.bindDN !== undefined ? connection.bindDN : tempConn.bindDN;
                 tempConn.bindCredentials = connection.bindCredentials !== undefined ?
                     connection.bindCredentials : tempConn.bindCredentials;
                 tempConn.searchBase = connection.searchBase !== undefined ?

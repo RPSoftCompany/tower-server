@@ -249,27 +249,7 @@ module.exports = class ConfigurationModel {
 
         this.app.hookSingleton.executeHook('beforeCreate', 'ConfigurationModel', model);
 
-        if (model.rules !== undefined) {
-            model.rules.map((rule) => {
-                if (rule.name === undefined || rule.name === null || rule.name === '') {
-                    this.log('debug', 'createConfigurationModel', 'FINISHED');
-                    throw new HttpErrors.BadRequest('Invalid rule: name not valid');
-                }
-                if (rule.value === undefined || rule.value === null || rule.value === '') {
-                    this.log('debug', 'createConfigurationModel', 'FINISHED');
-                    throw new HttpErrors.BadRequest('Invalid rule: value not valid');
-                }
-                if (rule.error === undefined || rule.error === null || rule.error === '') {
-                    this.log('debug', 'createConfigurationModel', 'FINISHED');
-                    throw new HttpErrors.BadRequest('Invalid rule: error not valid');
-                }
-
-                const random = Math.random().toString(36).substr(2, 15);
-                rule._id = random;
-            });
-        } else {
-            model.rules = [];
-        }
+        model.rules = [];
 
         if (wasDeleted) {
             await exists.updateAttributes(model);
@@ -509,6 +489,24 @@ module.exports = class ConfigurationModel {
             throw new HttpErrors.Unauthorized();
         }
 
+        const Rule = this.app.models.rule;
+        let isValid = true;
+
+        Object.getOwnPropertyNames(Rule.definition.rawProperties).forEach( (el) => {
+            const req = Rule.definition.rawProperties[el].required === undefined
+                ? false : Rule.definition.rawProperties[el].required;
+            if (req) {
+                if (rule[el] === undefined || rule[el] === null || rule[el] === '') {
+                    isValid = false;
+                }
+            }
+        });
+
+        if (!isValid) {
+            this.log('debug', 'addRule', 'FINISHED');
+            throw new HttpErrors.BadRequest('Rule model is invalid');
+        }
+
         this.app.hookSingleton.executeHook('beforeAddRule', 'ConfigurationModel', {
             modelId: modelId,
             rule: rule,
@@ -607,6 +605,24 @@ module.exports = class ConfigurationModel {
         if (!await this.validateWritePermissions(model.base, model.name, options.accessToken.userId)) {
             this.log('debug', 'modifyRule', 'FINISHED');
             throw new HttpErrors.Unauthorized();
+        }
+
+        const Rule = this.app.models.rule;
+        let isValid = true;
+
+        Object.getOwnPropertyNames(Rule.definition.rawProperties).forEach( (el) => {
+            const req = Rule.definition.rawProperties[el].required === undefined
+                ? false : Rule.definition.rawProperties[el].required;
+            if (req) {
+                if (rule[el] === undefined || rule[el] === null || rule[el] === '') {
+                    isValid = false;
+                }
+            }
+        });
+
+        if (!isValid) {
+            this.log('debug', 'addRule', 'FINISHED');
+            throw new HttpErrors.BadRequest('Rule model is invalid');
         }
 
         let changedRule = null;

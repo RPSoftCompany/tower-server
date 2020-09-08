@@ -1,6 +1,6 @@
 {
   "name": "tower",
-  "version": "1.6.0",
+  "version": "1.7.0",
   "bin": "server/server.js",
   "main": "server/server.js",
   "engines": {
@@ -65,6 +65,7 @@
     "express-session": "^1.16.2",
     "file-system": "^2.2.2",
     "helmet": "^3.21.1",
+    "ldap-authentication": "^2.2.1",
     "ldapauth-fork": "^4.2.0",
     "ldapjs": "^1.0.2",
     "loopback": "^3.27.0",

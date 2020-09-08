@@ -275,15 +275,10 @@ module.exports = class Configuration {
 
         const userId = options.accessToken.userId;
 
-        // const baseConfiguration = this.app.models.baseConfiguration;
         const Configuration = this.app.models.configuration;
         const configModel = new ConfigurationModelClass(this.app);
 
         const baseCache = await this.app.get('BaseConfigurationInstance').getConfigurationModelFromCache();
-
-        // const allBases = await baseConfiguration.find({
-        //     order: 'sequenceNumber ASC',
-        // });
 
         const allBases = baseCache.sort((a, b) => {
             return a.sequenceNumber > b.sequenceNumber;
@@ -310,6 +305,8 @@ module.exports = class Configuration {
             }
         };
 
+        let rules = [];
+
         for (let i = 1; i < allBases.length; i++) {
             const base = allBases[i];
             const parent = allBases[i - 1];
@@ -321,11 +318,53 @@ module.exports = class Configuration {
             }, options);
 
             if (model !== null) {
+                rules = [...rules, ...model.rules];
                 if (model.options !== null) {
                     if (model.options.hasRestrictions) {
                         if (!model.restrictions.includes(config[base.name])) {
                             this.log('debug', 'createConfiguration', 'FINISHED');
                             throw new HttpErrors.BadRequest(`Model restrictions forbids this configuration`);
+                        }
+                    }
+                }
+            }
+        }
+
+        for (const rule of rules) {
+            for (const variable of config.variables) {
+                if (rule.targetRegEx) {
+                    const regex = new RegExp(rule.targetValue);
+                    if (regex.test(variable[rule.targetType])) {
+                        if (rule.conditionRegEx) {
+                            const conRegEx = new RegExp(rule.conditionValue);
+                            if (!conRegEx.test(variable[rule.conditionType])) {
+                                this.log('debug', 'createConfiguration', 'FINISHED');
+                                throw new HttpErrors.BadRequest(`Invalid ${
+                                    rule.conditionType} in ${variable.name}: ${rule.error}`);
+                            }
+                        } else {
+                            if (variable[rule.conditionType] !== rule.conditionValue) {
+                                this.log('debug', 'createConfiguration', 'FINISHED');
+                                throw new HttpErrors.BadRequest(`Invalid ${
+                                    rule.conditionType} in ${variable.name}: ${rule.error}`);
+                            }
+                        }
+                    }
+                } else {
+                    if (variable[rule.targetType] === rule.targetValue) {
+                        if (rule.conditionRegEx) {
+                            const conRegEx = new RegExp(rule.conditionValue);
+                            if (!conRegEx.test(variable[rule.conditionType])) {
+                                this.log('debug', 'createConfiguration', 'FINISHED');
+                                throw new HttpErrors.BadRequest(`Invalid ${
+                                    rule.conditionType} in ${variable.name}: ${rule.error}`);
+                            }
+                        } else {
+                            if (variable[rule.conditionType] !== rule.conditionValue) {
+                                this.log('debug', 'createConfiguration', 'FINISHED');
+                                throw new HttpErrors.BadRequest(`Invalid ${
+                                    rule.conditionType} in ${variable.name}: ${rule.error}`);
+                            }
                         }
                     }
                 }

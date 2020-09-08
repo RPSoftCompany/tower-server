@@ -15,7 +15,9 @@
 //    along with Tower.  If not, see <http://www.gnu.org/licenses/>.
 
 const HttpErrors = require('http-errors');
-const LdapAuth = require('ldapauth-fork');
+const {authenticate} = require('ldap-authentication');
+const ConfigurationClass = require('./configuration.js');
+
 
 module.exports = class Member {
     /**
@@ -30,6 +32,8 @@ module.exports = class Member {
         this.app = app;
 
         this.ldapClient = null;
+        this.ldapServer = null;
+        this.ldapInitialized = false;
 
         this.rolesCache = [];
         this.groupCache = [];
@@ -131,9 +135,11 @@ module.exports = class Member {
             },
         });
 
+        this.ldapInitialized = true;
+
         if (server !== null) {
             this.log('debug', 'initializeLDAP', 'FINISHED');
-            return new LdapAuth(server);
+            this.ldapServer = server;
         } else {
             this.log('debug', 'initializeLDAP', 'FINISHED');
             return null;
@@ -168,29 +174,27 @@ module.exports = class Member {
 
         const User = this.app.models.member;
 
-        let ldap = null;
-        if (credentials.username !== 'admin') {
-            ldap = await this.initializeLDAP();
+        if (!this.ldapInitialized) {
+            await this.initializeLDAP();
         }
 
-        if (ldap !== null && credentials.username !== 'admin') {
-            ldap.on('error', (err) => {
-                this.log('error', 'login', `Error connecting to LDAP: ${err}`);
-            });
+        if (this.ldapServer !== null && credentials.username !== 'admin') {
+            try {
+                const configuration = new ConfigurationClass(this.app);
+                await configuration.createCrypt();
 
-            const auth = (username, password) => {
-                return new Promise((resolve) => ldap.authenticate(username, password, (err, user) => {
-                    resolve({
-                        user,
-                        err,
-                    });
-                }));
-            };
+                const password = configuration.decryptPassword(this.ldapServer.bindCredentials);
 
-            const out = await auth(credentials.username, credentials.password);
-
-            if (out.err !== null) {
-                this.log('error', 'login', out.err);
+                await authenticate({
+                    ldapOpts: {url: this.ldapServer.url},
+                    adminDn: this.ldapServer.bindDN,
+                    adminPassword: password,
+                    username: credentials.username,
+                    userPassword: credentials.password,
+                    userSearchBase: this.ldapServer.searchBase,
+                    usernameAttribute: 'cn',
+                });
+            } catch (_e) {
                 this.log('debug', 'login', 'FINISHED');
                 throw new HttpErrors.Unauthorized('Invalid username or password');
             }
@@ -236,7 +240,7 @@ module.exports = class Member {
             });
 
             tokens.forEach((el) => {
-                el.validate((err, isValid) => {
+                el.validate((_err, isValid) => {
                     if (!isValid) {
                         el.destroy();
                     }
@@ -303,7 +307,7 @@ module.exports = class Member {
             });
 
             tokens.forEach((el) => {
-                el.validate((err, isValid) => {
+                el.validate((_err, isValid) => {
                     if (!isValid) {
                         el.destroy();
                     }

@@ -12,12 +12,28 @@
     "_id": {
       "type": "string"
     },
-    "name": {
+    "targetValue": {
       "type": "string",
       "required": true
     },
-    "value": {
+    "targetType": {
       "type": "string",
+      "required": true
+    },
+    "targetRegEx": {
+      "type": "boolean",
+      "required": true
+    },
+    "conditionValue": {
+      "type": "string",
+      "required": true
+    },
+    "conditionType": {
+      "type": "string",
+      "required": true
+    },
+    "conditionRegEx": {
+      "type": "boolean",
       "required": true
     },
     "error": {

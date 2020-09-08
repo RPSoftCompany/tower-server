@@ -14,7 +14,7 @@
       "required": true
     },
     "value": {
-      "type": "string",
+      "type": "any",
       "required": false
     },
     "type": {

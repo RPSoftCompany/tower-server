@@ -17,5 +17,6 @@
 'use strict';
 
 module.exports = function(Rule) {
-
+    Rule.validatesPresenceOf('targetValue', 'targetType', 'targetRegEx',
+        'conditionValue', 'conditionType', 'conditionRegEx', 'error');
 };

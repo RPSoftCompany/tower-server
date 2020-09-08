@@ -643,8 +643,8 @@ class ForEach extends InterpreterCommon {
     getForEachData(text) {
         // FOR validation
         // eslint-disable-next-line max-len
-        const valid = /%%forEach\s+[^\s]+\s+in\s+variables\s*%%\s*$|%%forEach\s+[^\s]+\s+of\s+variables\[\s*["'`]+.*["'`]+\s*\]\s*%%\s*$/
-            .test(text);
+        const valid = /%%forEach\s+[^\s]+\s+in\s+variables\s*%%\s*$|%%forEach\s+[^\s]+\s+of\s+variables\[\s*["'`]+.*["'`]+\s*\]\s*%%\s*$|%%forEach\s+[^\s]+\s+in\s+list\[\s*["'`]+.*["'`]+\s*\]\s*%%$/.
+            test(text);
 
         if (!valid) {
             throw new Error(`Invalid for statement: ${text.trim()}`);
@@ -670,6 +670,28 @@ class ForEach extends InterpreterCommon {
             allVariables = this.configurationVariables.filter((el) => {
                 return regex.test(el.name);
             });
+        } else {
+            if (text.startsWith('list')) {
+                text = text.replace(/^list\[\s*['"`]/, '');
+                text = text.replace(/['"`]\s*\]\s*%%$/, '');
+
+                const variable = this.configurationVariables.find( (el) => {
+                    return el.name === text;
+                });
+
+                if (variable !== undefined && variable.type === 'list') {
+                    allVariables = [];
+                    variable.value.forEach( (el, index) => {
+                        allVariables.push({
+                            name: `${text}_${index}`,
+                            value: el,
+                            type: 'string',
+                        });
+                    });
+                } else {
+                    allVariables = [];
+                }
+            }
         }
 
         return {
