@@ -50,10 +50,11 @@
     "lint": "eslint .",
     "start": "NODE_ENV=development nodemon --ignore 'test/' .",
     "startTest": "NODE_ENV=test nodemon --ignore 'test/' .",
+    "runFullTest": "NODE_ENV=development node .",
     "test": "mocha --growl",
     "testScenarios": "mocha --growl test/scenarios/**/*.js",
     "package": "pkg --out-path ../tower-dist .",
-    "start-server": "npm start",
+    "start-server": "npm run runFullTest",
     "ci": "start-server-and-test start-server http://localhost:3000 test"
   },
   "dependencies": {
