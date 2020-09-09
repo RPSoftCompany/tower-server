@@ -92,6 +92,9 @@ module.exports = function(V1) {
 
         if (output.length === 0) {
             throw new HttpErrors.Unauthorized();
+        } else {
+            // removing new line at the end of output
+            output = output.substring(0, output.length - 1);
         }
 
         let contentType = 'application/json';

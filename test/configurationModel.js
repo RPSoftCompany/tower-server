@@ -39,8 +39,12 @@ describe('Configuration Model', () => {
                     'rules': [
                         {
                             '_id': 'string',
-                            'name': 'string',
-                            'value': 'string',
+                            'targetValue': 'string',
+                            'targetType': 'string',
+                            'targetRegEx': true,
+                            'conditionValue': 'string',
+                            'conditionType': 'string',
+                            'conditionRegEx': true,
                             'error': 'string',
                         },
                     ],
@@ -78,8 +82,12 @@ describe('Configuration Model', () => {
                     'rules': [
                         {
                             '_id': 'string',
-                            'name': 'string',
-                            'value': 'string',
+                            'targetValue': 'string',
+                            'targetType': 'string',
+                            'targetRegEx': true,
+                            'conditionValue': 'string',
+                            'conditionType': 'string',
+                            'conditionRegEx': true,
                             'error': 'string',
                         },
                     ],
@@ -106,8 +114,12 @@ describe('Configuration Model', () => {
                     'rules': [
                         {
                             '_id': 'string',
-                            'name': 'string',
-                            'value': 'string',
+                            'targetValue': 'string',
+                            'targetType': 'string',
+                            'targetRegEx': true,
+                            'conditionValue': 'string',
+                            'conditionType': 'string',
+                            'conditionRegEx': true,
                             'error': 'string',
                         },
                     ],
@@ -163,8 +175,13 @@ describe('Configuration Model', () => {
         describe('POST/{id}/rule', () => {
             it(`should return 201`, async () => {
                 const configuration = await axios.post(`${url}/configurationModels/${id}/rule`, {
-                    'name': 'string',
-                    'value': 'string',
+                    '_id': 'string',
+                    'targetValue': 'string',
+                    'targetType': 'string',
+                    'targetRegEx': true,
+                    'conditionValue': 'string',
+                    'conditionType': 'string',
+                    'conditionRegEx': true,
                     'error': 'string',
                 }, {
                     headers: {Authorization: token},
@@ -180,8 +197,12 @@ describe('Configuration Model', () => {
             it(`should return 200`, async () => {
                 const configuration = await axios.patch(`${url}/configurationModels/${id}/rule`, {
                     '_id': 'string',
-                    'name': 'string1',
-                    'value': 'string',
+                    'targetValue': 'string2',
+                    'targetType': 'string',
+                    'targetRegEx': true,
+                    'conditionValue': 'string',
+                    'conditionType': 'string',
+                    'conditionRegEx': true,
                     'error': 'string',
                 }, {
                     headers: {Authorization: token},

@@ -83,7 +83,8 @@ describe('Constant Varaibles', () => {
         });
         describe('GET', () => {
             it(`should return 200`, async () => {
-                const constantVariable = await axios.get(`${url}/constantVariables?filter={"where":{"string":"string"}}`, {
+                const constantVariable = await axios.get(`${url
+                }/constantVariables?filter={"where":{"string":"string"}}`, {
                     headers: {Authorization: token},
                 });
 
@@ -123,7 +124,8 @@ describe('Constant Varaibles', () => {
         });
         describe('GET/findLatest', () => {
             it(`should return 200`, async () => {
-                const constantVariable = await axios.get(`${url}/constantVariables/findLatest?filter={"string":"string"}`, {
+                const constantVariable = await axios.get(`${url
+                }/constantVariables/findLatest?filter={"string":"string"}`, {
                     headers: {Authorization: token},
                 });
 
