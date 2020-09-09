@@ -164,7 +164,8 @@ describe('Configuration Model', () => {
 
         describe('DELETE/{id}/restriction', () => {
             it(`should return 204`, async () => {
-                const configuration = await axios.delete(`${url}/configurationModels/${id}/restriction?restriction=asdf`, {
+                const configuration = await axios.delete(`${url}/configurationModels/${
+                    id}/restriction?restriction=asdf`, {
                     headers: {Authorization: token},
                 });
 

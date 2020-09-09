@@ -99,10 +99,10 @@ module.exports = class V1 {
 
             if (configSplit.length === split.length) {
                 basesArray.forEach((base) => {
-                    matchedUrl = matchedUrl.replaceAll(base, '[^\\/]*');
+                    matchedUrl = matchedUrl.replace(base, '[^\\/]*');
                 });
 
-                matchedUrl.replaceAll('/', '\\/');
+                matchedUrl.replace('/', '\\/');
 
                 const regex = new RegExp(matchedUrl);
 

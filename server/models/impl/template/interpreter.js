@@ -29,7 +29,7 @@ class InterpreterCommon {
      */
     constructor(text, configuration, returnsJson, variables) {
         this.variables = [];
-        this.text = text.replaceAll('\r\n', '\n');
+        this.text = text.replace('\r\n', '\n');
 
         this.variables = variables;
 

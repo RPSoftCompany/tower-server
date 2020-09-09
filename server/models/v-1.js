@@ -32,11 +32,6 @@ const initiate = (main) => {
     }
 };
 
-String.prototype.replaceAll = function(search, replacement) {
-    const target = this;
-    return target.replace(new RegExp(search, 'g'), replacement);
-};
-
 module.exports = function(V1) {
     initiate(V1);
 
@@ -63,7 +58,7 @@ module.exports = function(V1) {
 
         let url = data._parsedUrl.path;
 
-        url = url.replaceAll('%20', ' ');
+        url = url.replace(/%20/, '');
 
         if (url.indexOf('?') !== -1) {
             url = url.substring(0, url.indexOf('?'));
@@ -94,7 +89,7 @@ module.exports = function(V1) {
             throw new HttpErrors.Unauthorized();
         } else {
             // removing new line at the end of output
-            output = output.substring(0, output.length - 1);
+            output = output.replace(/\s+$/, '');
         }
 
         let contentType = 'application/json';
