@@ -4,7 +4,7 @@ module.exports = {
         connector: 'memory',
     },
     mongoDB: {
-        url: 'mongodb://localhost:27017/test',
+        url: 'mongodb://mongo:27017/docker',
         name: 'mongoDB',
         connector: 'mongodb',
     },
