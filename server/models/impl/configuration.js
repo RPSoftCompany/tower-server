@@ -164,9 +164,13 @@ module.exports = class Configuration {
      * @return {string} encrypted password
      */
     encryptPassword(password) {
+        if (password === '' || password === null || password === undefined) {
+            return '';
+        }
+
         let iv = crypto.randomBytes(16);
         const cipher = crypto.createCipheriv('aes-256-cbc', Buffer.from(this.cryptr), Buffer.from(iv, 'hex'));
-        let encrypted = cipher.update(password);
+        let encrypted = cipher.update(`${password}`);
 
         encrypted = Buffer.concat([encrypted, cipher.final()]);
 
@@ -183,6 +187,10 @@ module.exports = class Configuration {
      * @return {string} decrypted password
      */
     decryptPassword(password) {
+        if (password === '' || password === null || password === undefined) {
+            return '';
+        }
+
         const textParts = password.split(':');
         const ivText = textParts.shift().split('').reverse().join('');
         const iv = Buffer.from(ivText, 'hex');
