@@ -270,6 +270,7 @@ module.exports = class BaseConfiguration {
                 if (key.includes(base.name)) {
                     const temp = value[value.length - 1].variables;
                     temp.forEach((el) => {
+                        el.source = base.name;
                         variables.set(el.name, el);
                     });
                 }
