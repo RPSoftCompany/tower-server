@@ -519,7 +519,7 @@ class If extends InterpreterCommon {
         }
 
         if (sign === '==') {
-            return varValue === condition;
+            return `${varValue}` === `${condition}`;
         } else if (sign === '>=') {
             return varValue >= condition;
         } else if (sign === '!=') {
