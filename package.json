@@ -59,7 +59,7 @@
   },
   "dependencies": {
     "@aliatech/loopback-mongo-aggregate-mixin": "^1.1.1",
-    "axios": "^0.19.0",
+    "axios": "^0.21.1",
     "compression": "^1.0.3",
     "confert": "^1.0.0",
     "cors": "^2.5.2",
