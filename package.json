@@ -85,7 +85,7 @@
     "eslint": "^6.0.0",
     "eslint-config-google": "^0.13.0",
     "eslint-config-loopback": "^8.0.0",
-    "mocha": "^6.2.0",
+    "mocha": "^10.2.0",
     "nyc": "^15.0.0",
     "should": "^13.2.3",
     "start-server-and-test": "^1.11.3"
